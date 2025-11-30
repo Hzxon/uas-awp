@@ -1,5 +1,6 @@
 const bcrypt = require("bcrypt");
 const pool = require("../config/db");
+const jwt = require("jsonwebtoken");
 
 // ===== SIGNUP UNTUK CUSTOMER =====
 exports.signup = async (req, res) => {
@@ -80,6 +81,77 @@ exports.signup = async (req, res) => {
     });
   } catch (err) {
     console.error("Signup error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Terjadi kesalahan pada server",
+    });
+  }
+};
+
+
+// ===== LOGIN MENGGUNAKAN EMAIL =====
+exports.login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // --- Validasi input wajib ---
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Email dan Password wajib diisi",
+      });
+    }
+
+    // --- Cari user berdasarkan email ---
+    const [rows] = await pool.query(
+      "SELECT id, username, email, password_hash, role FROM users WHERE email = ?",
+      [email]
+    );
+
+    if (rows.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Email atau password salah",
+      });
+    }
+
+    const user = rows[0];
+
+    // --- Bandingkan password ---
+    const match = await bcrypt.compare(password, user.password_hash);
+    if (!match) {
+      return res.status(400).json({
+        success: false,
+        message: "Email atau password salah",
+      });
+    }
+
+    // --- Buat token ---
+    const token = jwt.sign(
+      {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    // --- Berhasil ---
+    return res.json({
+      success: true,
+      message: "Login berhasil",
+      token,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (err) {
+    console.error("Login error:", err);
     return res.status(500).json({
       success: false,
       message: "Terjadi kesalahan pada server",
