@@ -5,25 +5,42 @@ const jwt = require("jsonwebtoken");
 // ===== SIGNUP UNTUK CUSTOMER =====
 exports.signup = async (req, res) => {
   try {
-    const { username, email, password, retypePassword } = req.body;
+    const { username, email, phone, password, retypePassword } = req.body;
 
     // --- Validasi: semua field wajib ---
-    if (!username || !email || !password || !retypePassword) {
+    if (!username || !email || !phone || !password || !retypePassword) {
       return res.status(400).json({
         success: false,
-        message: "Username, Email, Password, dan Retype Password wajib diisi",
+        message: "Semua field wajib diisi (Username, Email, Phone, Password, Retype Password)",
       });
     }
 
     // Validasi format email
     if (!email.endsWith("@gmail.com")) {
-        return res.status(400).json({
-            success: false,
-            message: "Email harus menggunakan @gmail.com",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Email harus menggunakan @gmail.com",
+      });
     }
 
-    // --- Validasi: password dan retype harus sama ---
+    // Validasi nomor telepon (hanya angka)
+    const phoneRegex = /^[0-9]+$/;
+    if (!phoneRegex.test(phone)) {
+      return res.status(400).json({
+        success: false,
+        message: "Nomor telepon hanya boleh mengandung angka",
+      });
+    }
+
+    // Validasi panjang nomor telepon
+    if (phone.length < 10 || phone.length > 15) {
+      return res.status(400).json({
+        success: false,
+        message: "Nomor telepon harus 10-15 digit",
+      });
+    }
+
+    // Validasi password & retype
     if (password !== retypePassword) {
       return res.status(400).json({
         success: false,
@@ -31,7 +48,6 @@ exports.signup = async (req, res) => {
       });
     }
 
-    // --- Validasi: panjang password minimal 6 karakter (opsional tapi bagus) ---
     if (password.length < 6) {
       return res.status(400).json({
         success: false,
@@ -39,12 +55,11 @@ exports.signup = async (req, res) => {
       });
     }
 
-    // --- Cek username sudah ada atau belum ---
+    // Cek username sudah dipakai
     const [existing] = await pool.query(
       "SELECT id FROM users WHERE username = ?",
       [username]
     );
-
     if (existing.length > 0) {
       return res.status(400).json({
         success: false,
@@ -52,29 +67,39 @@ exports.signup = async (req, res) => {
       });
     }
 
-    // Cek email sudah ada atau belum
+    // Cek email sudah dipakai
     const [emailCheck] = await pool.query(
-        "SELECT id FROM users WHERE email = ?",
-        [email]
+      "SELECT id FROM users WHERE email = ?",
+      [email]
     );
-
     if (emailCheck.length > 0) {
-        return res.status(400).json({
+      return res.status(400).json({
         success: false,
         message: "Email sudah terdaftar. Gunakan email lain.",
-        });
+      });
     }
 
-    // --- Hash password ---
+    // (Opsional) Cek nomor telepon sudah dipakai
+    const [phoneCheck] = await pool.query(
+      "SELECT id FROM users WHERE phone = ?",
+      [phone]
+    );
+    if (phoneCheck.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Nomor telepon sudah terdaftar. Gunakan nomor lain.",
+      });
+    }
+
+    // Hash password
     const passwordHash = await bcrypt.hash(password, 10);
 
-    // --- Insert user baru dengan role 'customer' ---
+    // Insert user baru dengan role 'customer'
     await pool.query(
-      "INSERT INTO users (username, email, password_hash, role) VALUES (?, ?, ?, 'customer')",
-      [username, email, passwordHash]
+      "INSERT INTO users (username, email, phone, password_hash, role) VALUES (?, ?, ?, ?, 'customer')",
+      [username, email, phone, passwordHash]
     );
 
-    // Respon sukses
     return res.status(201).json({
       success: true,
       message: "Signup berhasil! Silakan login.",
