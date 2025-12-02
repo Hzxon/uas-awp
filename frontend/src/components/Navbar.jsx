@@ -1,17 +1,28 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-const Navbar = ({ cartCount, isLoggedIn, onLogout, onScroll, activeSection, userName, openModal }) => {
+// Menerima onNavigating (hanya ada di CartPage)
+const Navbar = ({ cartCount, isLoggedIn, onLogout, onScroll, activeSection, userName, openModal, onNavigating }) => {
     
+    // Fungsi handler untuk navigasi internal (smooth scroll)
     const handleNavClick = (id) => {
+        // Jika onNavigating ada (berarti kita di CartPage), panggil onNavigating dulu
+        if (onNavigating) { 
+            onNavigating(id); // <-- Memicu modal konfirmasi keluar
+            return;
+        }
+
+        // Jika tidak ada (berarti kita di LandingPage), lakukan scroll normal
         if (onScroll) {
             onScroll(id);
         }
     };
 
+    // Fungsi untuk mendapatkan kelas highlight dinamis (hanya aktif di LandingPage)
     const getNavClass = (id) => {
         const baseClass = "border-b-2 px-3 py-2 font-medium bg-transparent border-0 focus:outline-none transition duration-150";
-        if (id === activeSection) {
+        // Di CartPage, kita tidak tahu activeSection, jadi highlightnya nonaktif
+        if (id === activeSection && !onNavigating) { 
             return `${baseClass} border-blue-500 text-blue-600`;
         } else {
             return `${baseClass} border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700`;
@@ -24,9 +35,10 @@ const Navbar = ({ cartCount, isLoggedIn, onLogout, onScroll, activeSection, user
                 <div className="flex justify-between items-center h-16">
                     {/* Logo */}
                     <div className="flex-shrink-0">
-                        <Link to="/" onClick={() => handleNavClick('beranda')} className="text-2xl font-extrabold text-blue-600">
-                            Wash<span className="text-green-500">Fast</span>
-                        </Link>
+                        {/* Logo selalu mengarah ke beranda dan memicu konfirmasi jika di CartPage */}
+                        <button onClick={() => handleNavClick('beranda')} className="text-2xl font-extrabold text-blue-600">
+                             Wash<span className="text-green-500">Fast</span>
+                        </button>
                     </div>
 
                     {/* Navigasi Utama */}
@@ -50,8 +62,7 @@ const Navbar = ({ cartCount, isLoggedIn, onLogout, onScroll, activeSection, user
                         
                         {/* Tombol Login/Keluar */}
                         {isLoggedIn ? (
-                            <div className="flex items-center space-x-2">
-                                {/* Tampilkan Nama User */}
+                           <div className="flex items-center space-x-2">
                                 <span className="hidden sm:inline text-sm font-semibold text-gray-700">
                                     Halo, {userName.split(' ')[0]}! 
                                 </span>
