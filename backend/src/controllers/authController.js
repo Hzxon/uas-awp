@@ -2,52 +2,41 @@ const bcrypt = require("bcrypt");
 const pool = require("../config/db");
 const jwt = require("jsonwebtoken");
 
-// ===== SIGNUP UNTUK CUSTOMER =====
+// ===== SIGNUP (nama, email, password) =====
 exports.signup = async (req, res) => {
   try {
-    const { username, email, phone, password, retypePassword } = req.body;
+    const { nama, email, password } = req.body;
 
-    // --- Validasi: semua field wajib ---
-    if (!username || !email || !phone || !password || !retypePassword) {
+    // Validasi field wajib
+    if (!nama || !email || !password) {
       return res.status(400).json({
         success: false,
-        message: "Semua field wajib diisi (Username, Email, Phone, Password, Retype Password)",
+        message: "Nama, Email, dan Password wajib diisi",
       });
     }
 
-    // Validasi format email
-    if (!email.endsWith("@gmail.com")) {
+    // Validasi format email simpel
+    if (!email.includes("@") || !email.includes(".")) {
       return res.status(400).json({
         success: false,
-        message: "Email harus menggunakan @gmail.com",
+        message: "Format email tidak valid",
       });
     }
 
-    // Validasi nomor telepon (hanya angka)
-    const phoneRegex = /^[0-9]+$/;
-    if (!phoneRegex.test(phone)) {
+    // Cek email sudah digunakan
+    const [checkEmail] = await pool.query(
+      "SELECT id FROM users WHERE email = ?",
+      [email]
+    );
+
+    if (checkEmail.length > 0) {
       return res.status(400).json({
         success: false,
-        message: "Nomor telepon hanya boleh mengandung angka",
+        message: "Email sudah terdaftar",
       });
     }
 
-    // Validasi panjang nomor telepon
-    if (phone.length < 10 || phone.length > 15) {
-      return res.status(400).json({
-        success: false,
-        message: "Nomor telepon harus 10-15 digit",
-      });
-    }
-
-    // Validasi password & retype
-    if (password !== retypePassword) {
-      return res.status(400).json({
-        success: false,
-        message: "Password dan Retype Password tidak cocok",
-      });
-    }
-
+    // Validasi password minimal 6 karakter
     if (password.length < 6) {
       return res.status(400).json({
         success: false,
@@ -55,54 +44,18 @@ exports.signup = async (req, res) => {
       });
     }
 
-    // Cek username sudah dipakai
-    const [existing] = await pool.query(
-      "SELECT id FROM users WHERE username = ?",
-      [username]
-    );
-    if (existing.length > 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Username sudah digunakan, silakan pilih username lain",
-      });
-    }
-
-    // Cek email sudah dipakai
-    const [emailCheck] = await pool.query(
-      "SELECT id FROM users WHERE email = ?",
-      [email]
-    );
-    if (emailCheck.length > 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Email sudah terdaftar. Gunakan email lain.",
-      });
-    }
-
-    // (Opsional) Cek nomor telepon sudah dipakai
-    const [phoneCheck] = await pool.query(
-      "SELECT id FROM users WHERE phone = ?",
-      [phone]
-    );
-    if (phoneCheck.length > 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Nomor telepon sudah terdaftar. Gunakan nomor lain.",
-      });
-    }
-
     // Hash password
-    const passwordHash = await bcrypt.hash(password, 10);
+    const hashed = await bcrypt.hash(password, 10);
 
-    // Insert user baru dengan role 'customer'
+    // Insert user baru, role default 'customer'
     await pool.query(
-      "INSERT INTO users (username, email, phone, password_hash, role) VALUES (?, ?, ?, ?, 'customer')",
-      [username, email, phone, passwordHash]
+      "INSERT INTO users (nama, email, password, role) VALUES (?, ?, ?, 'customer')",
+      [nama, email, hashed]
     );
 
     return res.status(201).json({
       success: true,
-      message: "Signup berhasil! Silakan login.",
+      message: "Registrasi berhasil! Silakan login.",
     });
   } catch (err) {
     console.error("Signup error:", err);
@@ -114,12 +67,12 @@ exports.signup = async (req, res) => {
 };
 
 
-// ===== LOGIN MENGGUNAKAN EMAIL =====
+// ===== LOGIN (email, password) =====
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // --- Validasi input wajib ---
+    // Validasi input
     if (!email || !password) {
       return res.status(400).json({
         success: false,
@@ -127,9 +80,9 @@ exports.login = async (req, res) => {
       });
     }
 
-    // --- Cari user berdasarkan email ---
+    // Cari user berdasarkan email
     const [rows] = await pool.query(
-      "SELECT id, username, email, password_hash, role FROM users WHERE email = ?",
+      "SELECT id, nama, email, password, role FROM users WHERE email = ?",
       [email]
     );
 
@@ -142,8 +95,8 @@ exports.login = async (req, res) => {
 
     const user = rows[0];
 
-    // --- Bandingkan password ---
-    const match = await bcrypt.compare(password, user.password_hash);
+    // Bandingkan password
+    const match = await bcrypt.compare(password, user.password);
     if (!match) {
       return res.status(400).json({
         success: false,
@@ -151,11 +104,11 @@ exports.login = async (req, res) => {
       });
     }
 
-    // --- Buat token ---
+    // Buat token
     const token = jwt.sign(
       {
         id: user.id,
-        username: user.username,
+        nama: user.nama,
         email: user.email,
         role: user.role,
       },
@@ -163,14 +116,13 @@ exports.login = async (req, res) => {
       { expiresIn: "1d" }
     );
 
-    // --- Berhasil ---
     return res.json({
       success: true,
       message: "Login berhasil",
       token,
       user: {
         id: user.id,
-        username: user.username,
+        nama: user.nama,
         email: user.email,
         role: user.role,
       },
