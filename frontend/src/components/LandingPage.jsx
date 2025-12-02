@@ -22,10 +22,8 @@ const HeroSection = () => (
     </section>
 );
 
-// Menerima prop BARU: initialScrollTarget
 const LandingPage = ({ 
-    isLoggedIn, onLogout, onAddToCart, cartCount, userName, openModal, 
-    initialScrollTarget // <--- PROPS BARU DARI App.jsx
+    isLoggedIn, onLogout, onAddToCart, cartCount, userName, openModal,
 }) => {
     const [activeSection, setActiveSection] = useState('beranda');
 
@@ -68,18 +66,6 @@ const LandingPage = ({
 
         return () => observer.disconnect();
     }, []);
-
-
-    // LOGIKA PERBAIKAN 2: Scroll Otomatis & Penyesuaian Active Section saat Navigasi Balik
-    useEffect(() => {
-        if (initialScrollTarget) {
-            // Panggil fungsi scroll untuk memindahkan halaman
-            scrollToSection(initialScrollTarget);
-            // Secara eksplisit atur active section saat navigasi dari CartPage
-            // Walaupun scrollToSection sudah mengaturnya, ini memastikan state langsung benar.
-            setActiveSection(initialScrollTarget);
-        }
-    }, [initialScrollTarget]); // Efek hanya berjalan saat initialScrollTarget berubah
 
 
     return (

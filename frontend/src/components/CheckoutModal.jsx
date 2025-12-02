@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 
 const CheckoutModal = ({ isOpen, onClose, cartItems, subtotal, finalTotal, deliveryFee, taxAmount: taxAmountProp, taxRate = 0.1, onConfirmOrder, userName, isSubmitting }) => {
-    if (!isOpen) return null;
 
     const taxAmount = typeof taxAmountProp === 'number' ? taxAmountProp : Math.round(subtotal * taxRate);
     const delivery = deliveryFee || 0;
@@ -13,6 +12,12 @@ const CheckoutModal = ({ isOpen, onClose, cartItems, subtotal, finalTotal, deliv
             weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
         });
     }, []);
+    const orderCode = useMemo(() => {
+        const seed = Math.abs(subtotal || 0) + cartItems.length * 17;
+        return `#WFAST${seed.toString().padStart(6, "0").slice(-6)}`;
+    }, [cartItems.length, subtotal]);
+
+    if (!isOpen) return null;
 
     return (
         // Overlay (Latar belakang gelap)
@@ -34,7 +39,7 @@ const CheckoutModal = ({ isOpen, onClose, cartItems, subtotal, finalTotal, deliv
                 <div className="text-sm text-gray-700 mb-6 space-y-2">
                     <p className='font-semibold'>Pesanan untuk: <span className='text-blue-600'>{userName}</span></p>
                     <p>Tanggal Transaksi: <span className='font-medium'>{transactionDate}</span></p>
-                    <p>Kode Transaksi: <span className='font-medium text-blue-500'>#WFAST{Date.now().toString().slice(-6)}</span></p>
+                    <p>Kode Transaksi: <span className='font-medium text-blue-500'>{orderCode}</span></p>
                 </div>
 
                 {/* Daftar Produk */}

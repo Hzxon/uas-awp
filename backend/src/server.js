@@ -4,6 +4,9 @@ const authRoutes = require("./routes/authRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const { verifyToken } = require("./middleware/auth");
 const pool = require("./config/db");
+const dotenv = require("dotenv");
+
+dotenv.config();
 
 const createApp = () => {
   const app = express();
