@@ -5,28 +5,32 @@ const products = [
         name: "Deterjen Konsentrat (1L)", 
         price: 45000, 
         displayPrice: "Rp 45.000",
-        type: 'Produk'
+        type: 'Produk',
+        unit: 'pcs'
     },
     { 
         id: "prod-soft", 
         name: "Pelembut Pakaian Premium", 
         price: 32000, 
         displayPrice: "Rp 32.000",
-        type: 'Produk'
+        type: 'Produk',
+        unit: 'pcs'
     },
     { 
         id: "prod-stain", 
         name: "Penghilang Noda Super", 
         price: 28000, 
         displayPrice: "Rp 28.000",
-        type: 'Produk'
+        type: 'Produk',
+        unit: 'pcs'
     },
     { 
         id: "prod-brush", 
         name: "Sikat Pakaian Premium", 
         price: 18000, 
         displayPrice: "Rp 18.000",
-        type: 'Produk'
+        type: 'Produk',
+        unit: 'pcs'
     },
 ];
 

@@ -1,13 +1,33 @@
 const bcrypt = require("bcrypt");
-const pool = require("../config/db");
 const jwt = require("jsonwebtoken");
+const pool = require("../config/db");
 
-// ===== SIGNUP (nama, email, password) =====
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PASSWORD_MIN_LENGTH = 8;
+
+const signToken = (user) => {
+  if (!process.env.JWT_SECRET) {
+    throw new Error("JWT_SECRET belum dikonfigurasi");
+  }
+
+  return jwt.sign(
+    {
+      id: user.id,
+      nama: user.nama,
+      email: user.email,
+      role: user.role,
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: "1d" }
+  );
+};
+
 exports.signup = async (req, res) => {
   try {
-    const { nama, email, password } = req.body;
+    const nama = req.body.nama?.trim();
+    const email = req.body.email?.toLowerCase().trim();
+    const password = req.body.password?.trim();
 
-    // Validasi field wajib
     if (!nama || !email || !password) {
       return res.status(400).json({
         success: false,
@@ -15,47 +35,51 @@ exports.signup = async (req, res) => {
       });
     }
 
-    // Validasi format email simpel
-    if (!email.includes("@") || !email.includes(".")) {
+    if (!EMAIL_REGEX.test(email)) {
       return res.status(400).json({
         success: false,
         message: "Format email tidak valid",
       });
     }
 
-    // Cek email sudah digunakan
-    const [checkEmail] = await pool.query(
-      "SELECT id FROM users WHERE email = ?",
-      [email]
-    );
+    if (password.length < PASSWORD_MIN_LENGTH) {
+      return res.status(400).json({
+        success: false,
+        message: `Password minimal ${PASSWORD_MIN_LENGTH} karakter`,
+      });
+    }
 
-    if (checkEmail.length > 0) {
+    const [existing] = await pool.query("SELECT id FROM users WHERE email = ?", [email]);
+    if (existing.length > 0) {
       return res.status(400).json({
         success: false,
         message: "Email sudah terdaftar",
       });
     }
 
-    // Validasi password minimal 6 karakter
-    if (password.length < 6) {
-      return res.status(400).json({
-        success: false,
-        message: "Password minimal 6 karakter",
-      });
-    }
-
-    // Hash password
     const hashed = await bcrypt.hash(password, 10);
-
-    // Insert user baru, role default 'customer'
-    await pool.query(
+    const [result] = await pool.query(
       "INSERT INTO users (nama, email, password, role) VALUES (?, ?, ?, 'customer')",
       [nama, email, hashed]
     );
 
+    const token = signToken({
+      id: result.insertId,
+      nama,
+      email,
+      role: "customer",
+    });
+
     return res.status(201).json({
       success: true,
-      message: "Registrasi berhasil! Silakan login.",
+      message: "Registrasi berhasil",
+      token,
+      user: {
+        id: result.insertId,
+        nama,
+        email,
+        role: "customer",
+      },
     });
   } catch (err) {
     console.error("Signup error:", err);
@@ -66,13 +90,11 @@ exports.signup = async (req, res) => {
   }
 };
 
-
-// ===== LOGIN (email, password) =====
 exports.login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const email = req.body.email?.toLowerCase().trim();
+    const password = req.body.password?.trim();
 
-    // Validasi input
     if (!email || !password) {
       return res.status(400).json({
         success: false,
@@ -80,41 +102,29 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Cari user berdasarkan email
     const [rows] = await pool.query(
       "SELECT id, nama, email, password, role FROM users WHERE email = ?",
       [email]
     );
 
     if (rows.length === 0) {
-      return res.status(400).json({
+      return res.status(401).json({
         success: false,
         message: "Email atau password salah",
       });
     }
 
     const user = rows[0];
-
-    // Bandingkan password
     const match = await bcrypt.compare(password, user.password);
+
     if (!match) {
-      return res.status(400).json({
+      return res.status(401).json({
         success: false,
         message: "Email atau password salah",
       });
     }
 
-    // Buat token
-    const token = jwt.sign(
-      {
-        id: user.id,
-        nama: user.nama,
-        email: user.email,
-        role: user.role,
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" }
-    );
+    const token = signToken(user);
 
     return res.json({
       success: true,
@@ -129,6 +139,33 @@ exports.login = async (req, res) => {
     });
   } catch (err) {
     console.error("Login error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Terjadi kesalahan pada server",
+    });
+  }
+};
+
+exports.me = async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      "SELECT id, nama, email, role FROM users WHERE id = ?",
+      [req.user.id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Pengguna tidak ditemukan",
+      });
+    }
+
+    return res.json({
+      success: true,
+      user: rows[0],
+    });
+  } catch (err) {
+    console.error("Profile error:", err);
     return res.status(500).json({
       success: false,
       message: "Terjadi kesalahan pada server",

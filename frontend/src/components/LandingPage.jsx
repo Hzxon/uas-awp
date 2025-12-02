@@ -92,7 +92,7 @@ const LandingPage = ({ isLoggedIn, onLogout, onAddToCart, cartCount, userName, o
                             <p className="text-2xl font-bold text-green-600 mt-3">Rp 8.000/kg</p>
                             {/* Memanggil onAddToCart dengan data item */}
                             <button className="mt-4 text-blue-600 font-medium hover:text-blue-800" 
-                                    onClick={() => onAddToCart({id: 'svc-reg', name: 'Cuci Kiloan Reguler', price: 8000, type: 'Layanan'})}>
+                                    onClick={() => onAddToCart({id: 'svc-reg', name: 'Cuci Kiloan Reguler', price: 8000, type: 'Layanan', unit: 'kg'})}>
                                 + Keranjang
                             </button>
                         </div>

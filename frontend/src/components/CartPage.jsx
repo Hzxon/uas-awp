@@ -3,33 +3,28 @@ import { Link, useNavigate } from 'react-router-dom';
 import Navbar from './Navbar'; 
 import Footer from './Footer'; 
 import CheckoutModal from './CheckoutModal';
-import ExitConfirmationModal from './ExitConfirmationModal'; // <-- IMPORT BARU
+import ExitConfirmationModal from './ExitConfirmationModal';
+import { orderApi } from '../api';
 
-const CartPage = ({ cartItems, onUpdateQuantity, isLoggedIn, userName, onLogout, cartCount }) => {
+const CartPage = ({ cartItems, onUpdateQuantity, isLoggedIn, userName, onLogout, cartCount, authToken, onOrderPlaced }) => {
     
     const navigate = useNavigate();
     const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     
-    // START LOGIC BLOCKING NAVIGASI
-    const [isExitModalOpen, setIsExitModalOpen] = useState(false); // <-- STATE BARU
-    const [targetSection, setTargetSection] = useState(null); // <-- STATE BARU
+    const [isExitModalOpen, setIsExitModalOpen] = useState(false);
+    const [targetSection, setTargetSection] = useState(null);
 
-    // Fungsi yang dipicu saat Navbar menekan tombol navigasi
     const handleNavAttempt = (id) => {
         setTargetSection(id);
         setIsExitModalOpen(true);
     };
 
-    // Fungsi yang dipicu saat user mengkonfirmasi 'Keluar' dari modal
     const handleConfirmExit = () => {
         setIsExitModalOpen(false);
-        // Kita tidak bisa menggunakan onScroll, tapi kita bisa menggunakan navigate ke '/' dan mengembalikannya ke LandingPage yang memiliki fungsi onScroll
         navigate('/', { state: { targetId: targetSection } }); 
-        // Note: Implementasi yang lebih kompleks akan memerlukan state management global untuk memicu onScroll di LandingPage
     };
-    // END LOGIC BLOCKING NAVIGASI
 
-    // ... (Logika Kalkulasi tetap sama)
     const { subtotal, totalItems } = useMemo(() => {
         const total = cartItems.reduce((sum, item) => sum + (item.qty * item.price), 0);
         const count = cartItems.reduce((sum, item) => sum + item.qty, 0);
@@ -37,9 +32,11 @@ const CartPage = ({ cartItems, onUpdateQuantity, isLoggedIn, userName, onLogout,
     }, [cartItems]);
 
     const deliveryFee = 15000;
-    const finalTotal = subtotal > 100000 ? subtotal : subtotal + deliveryFee;
+    const taxRate = 0.1;
+    const deliveryFeeValue = subtotal > 100000 ? 0 : deliveryFee;
+    const taxAmount = Math.round(subtotal * taxRate);
+    const finalTotal = subtotal + deliveryFeeValue + taxAmount;
 
-    // ... (Handler Checkout tetap sama)
     const handleOpenCheckout = () => {
         if (cartItems.length === 0) {
             alert("Keranjang masih kosong!");
@@ -48,24 +45,40 @@ const CartPage = ({ cartItems, onUpdateQuantity, isLoggedIn, userName, onLogout,
         setIsCheckoutModalOpen(true);
     };
 
-    const handleConfirmOrder = () => {
-        alert(`Pesanan Rp ${finalTotal.toLocaleString('id-ID')} telah dikonfirmasi dan siap dibayar. Terima kasih, ${userName}!`);
-        setIsCheckoutModalOpen(false);
-        navigate('/');
+    const handleConfirmOrder = async () => {
+        if (!authToken) {
+            alert("Sesi login berakhir, silakan login kembali.");
+            return;
+        }
+
+        setIsSubmitting(true);
+        try {
+            await orderApi.create(authToken, {
+                items: cartItems,
+                deliveryFee: deliveryFeeValue,
+                taxRate,
+            });
+            alert(`Pesanan Rp ${finalTotal.toLocaleString('id-ID')} berhasil dibuat. Terima kasih, ${userName || 'pelanggan'}!`);
+            setIsCheckoutModalOpen(false);
+            onOrderPlaced?.();
+            navigate('/');
+        } catch (err) {
+            alert(err.message || "Gagal memproses pesanan");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
         <div className="bg-blue-50 min-h-screen">
-            {/* Meneruskan handleNavAttempt sebagai onNavigating */}
             <Navbar 
                 cartCount={cartCount} 
                 isLoggedIn={isLoggedIn} 
                 userName={userName}
                 onLogout={onLogout}
-                onNavigating={handleNavAttempt} // <-- PROPS BARU
+                onNavigating={handleNavAttempt}
             />
 
-            {/* ... Konten CartPage (sama) ... */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <h1 className="text-4xl font-extrabold text-gray-800 mb-8 flex items-center">
                     <i className="fas fa-shopping-basket text-blue-600 mr-4"></i> Keranjang Belanja Anda
@@ -81,7 +94,6 @@ const CartPage = ({ cartItems, onUpdateQuantity, isLoggedIn, userName, onLogout,
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        {/* Kolom Kiri: Detail Item (Tetap Sama) */}
                         <div className="lg:col-span-2 space-y-4">
                             {cartItems.map((item) => (
                                 <div key={item.id} className="flex items-center bg-white p-4 rounded-xl shadow-md justify-between">
@@ -89,7 +101,7 @@ const CartPage = ({ cartItems, onUpdateQuantity, isLoggedIn, userName, onLogout,
                                         <i className={`text-3xl ${item.type === 'Layanan' ? 'fas fa-tshirt text-blue-500' : 'fas fa-box text-green-500'}`}></i>
                                         <div>
                                             <h2 className="font-semibold text-gray-800">{item.name}</h2>
-                                            <p className="text-sm text-gray-500">Rp {item.price.toLocaleString('id-ID')} / {item.unit}</p>
+                                            <p className="text-sm text-gray-500">Rp {item.price.toLocaleString('id-ID')} / {item.unit || 'unit'}</p>
                                         </div>
                                     </div>
 
@@ -116,7 +128,6 @@ const CartPage = ({ cartItems, onUpdateQuantity, isLoggedIn, userName, onLogout,
                             ))}
                         </div>
 
-                        {/* Kolom Kanan: Ringkasan Pembayaran (Tetap Sama) */}
                         <div className="lg:col-span-1 bg-white p-6 rounded-xl shadow-lg h-fit sticky top-20">
                             <h2 className="text-2xl font-bold text-gray-800 mb-4 border-b pb-2">Ringkasan Pesanan</h2>
                             <div className="space-y-3 text-gray-600">
@@ -125,9 +136,13 @@ const CartPage = ({ cartItems, onUpdateQuantity, isLoggedIn, userName, onLogout,
                                     <span>Rp {subtotal.toLocaleString('id-ID')}</span>
                                 </div>
                                 <div className="flex justify-between">
+                                    <span>PPN (10%)</span>
+                                    <span>Rp {taxAmount.toLocaleString('id-ID')}</span>
+                                </div>
+                                <div className="flex justify-between">
                                     <span>Biaya Pengiriman</span>
-                                    <span className={subtotal > 100000 ? "text-green-600" : ""}>
-                                        {subtotal > 100000 ? "Gratis" : `Rp ${deliveryFee.toLocaleString('id-ID')}`}
+                                    <span className={deliveryFeeValue === 0 ? "text-green-600" : ""}>
+                                        {deliveryFeeValue === 0 ? "Gratis" : `Rp ${deliveryFeeValue.toLocaleString('id-ID')}`}
                                     </span>
                                 </div>
                                 <div className="pt-4 border-t border-gray-200 flex justify-between font-bold text-xl text-gray-800">
@@ -150,19 +165,20 @@ const CartPage = ({ cartItems, onUpdateQuantity, isLoggedIn, userName, onLogout,
             
             <Footer />
 
-            {/* Modal Checkout */}
             <CheckoutModal
                 isOpen={isCheckoutModalOpen}
                 onClose={() => setIsCheckoutModalOpen(false)}
                 cartItems={cartItems}
                 subtotal={subtotal}
                 finalTotal={finalTotal}
-                deliveryFee={deliveryFee}
+                deliveryFee={deliveryFeeValue}
+                taxAmount={taxAmount}
+                taxRate={taxRate}
                 onConfirmOrder={handleConfirmOrder}
                 userName={userName}
+                isSubmitting={isSubmitting}
             />
 
-            {/* Modal Konfirmasi Keluar */}
             <ExitConfirmationModal
                 isOpen={isExitModalOpen}
                 onClose={() => setIsExitModalOpen(false)}

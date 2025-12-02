@@ -1,24 +1,32 @@
 import React, { useState } from 'react';
+import { authApi } from '../api';
 
 const ModalAuth = ({ type, onClose, onLoginSuccess, onRegisterSuccess, setModalType }) => {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const isLogin = type === 'login';
 
-    const handleSubmit = (event) => {
+    const handleSubmit = async (event) => {
         event.preventDefault();
+        setError('');
+        setIsSubmitting(true);
 
-        if (isLogin) {
-            if (email && password) {
-                onLoginSuccess("Simulasi User");
+        try {
+            if (isLogin) {
+                const data = await authApi.login(email, password);
+                onLoginSuccess?.(data);
+            } else {
+                const data = await authApi.signup(name, email, password);
+                onRegisterSuccess?.(data);
             }
-        } else {
-            // Simulasi Register
-            if (name && email && password) {
-                onRegisterSuccess(name); 
-            }
+        } catch (err) {
+            setError(err.message || 'Gagal memproses permintaan');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -55,9 +63,11 @@ const ModalAuth = ({ type, onClose, onLoginSuccess, onRegisterSuccess, setModalT
                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                                placeholder="Masukkan kata sandi"/>
                     </div>
-                    <button type="submit" 
-                            className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition duration-200 shadow-md">
-                        {isLogin ? 'Masuk' : 'Daftar'}
+                    {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
+                    <button type="submit"
+                            disabled={isSubmitting}
+                            className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition duration-200 shadow-md disabled:opacity-60 disabled:cursor-not-allowed">
+                        {isLogin ? (isSubmitting ? 'Memproses...' : 'Masuk') : (isSubmitting ? 'Memproses...' : 'Daftar')}
                     </button>
                 </form>
 

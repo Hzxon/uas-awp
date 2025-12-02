@@ -1,15 +1,13 @@
 import React, { useMemo } from 'react';
 
-const CheckoutModal = ({ isOpen, onClose, cartItems, subtotal, finalTotal, deliveryFee, onConfirmOrder, userName }) => {
+const CheckoutModal = ({ isOpen, onClose, cartItems, subtotal, finalTotal, deliveryFee, taxAmount: taxAmountProp, taxRate = 0.1, onConfirmOrder, userName, isSubmitting }) => {
     if (!isOpen) return null;
 
-    // Tambahkan PPN/Pajak untuk simulasi
-    const taxRate = 0.10; // 10%
-    const taxAmount = subtotal * taxRate;
+    const taxAmount = typeof taxAmountProp === 'number' ? taxAmountProp : Math.round(subtotal * taxRate);
+    const delivery = deliveryFee || 0;
     const totalBeforeDelivery = subtotal + taxAmount;
-    const finalAmountWithTax = finalTotal + taxAmount;
+    const finalAmount = typeof finalTotal === 'number' ? finalTotal : totalBeforeDelivery + delivery;
     
-    // Format tanggal transaksi
     const transactionDate = useMemo(() => {
         return new Date().toLocaleDateString('id-ID', {
             weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
@@ -74,8 +72,8 @@ const CheckoutModal = ({ isOpen, onClose, cartItems, subtotal, finalTotal, deliv
                     </div>
                     <div className="flex justify-between">
                         <span>Biaya Pengiriman</span>
-                        <span className={subtotal > 100000 ? "text-green-600 font-semibold" : "font-medium"}>
-                            {subtotal > 100000 ? "Gratis" : `Rp ${deliveryFee.toLocaleString('id-ID')}`}
+                        <span className={delivery === 0 ? "text-green-600 font-semibold" : "font-medium"}>
+                            {delivery === 0 ? "Gratis" : `Rp ${delivery.toLocaleString('id-ID')}`}
                         </span>
                     </div>
                 </div>
@@ -83,15 +81,16 @@ const CheckoutModal = ({ isOpen, onClose, cartItems, subtotal, finalTotal, deliv
                 {/* Total Pembayaran Akhir */}
                 <div className="pt-4 border-t border-gray-300 flex justify-between font-extrabold text-xl text-gray-900 bg-green-50 p-3 rounded-lg">
                     <span>TOTAL AKHIR PEMBAYARAN</span>
-                    <span>Rp {finalAmountWithTax.toLocaleString('id-ID')}</span>
+                    <span>Rp {finalAmount.toLocaleString('id-ID')}</span>
                 </div>
 
                 {/* Tombol Aksi */}
                 <div className="mt-8 space-y-3">
                     <button 
-                        onClick={onConfirmOrder} 
-                        className="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition duration-200 shadow-lg transform hover:scale-[1.01]">
-                        Konfirmasi & Bayar Sekarang
+                        onClick={onConfirmOrder}
+                        disabled={isSubmitting}
+                        className="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition duration-200 shadow-lg transform hover:scale-[1.01] disabled:opacity-60 disabled:cursor-not-allowed">
+                        {isSubmitting ? "Memproses..." : "Konfirmasi & Bayar Sekarang"}
                     </button>
                     <button 
                         onClick={onClose}
