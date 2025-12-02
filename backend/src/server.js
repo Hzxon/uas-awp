@@ -1,3 +1,6 @@
+const dotenv = require("dotenv");
+dotenv.config(); // ⬅️ load .env PALING AWAL
+
 const express = require("express");
 const cors = require("cors");
 const authRoutes = require("./routes/authRoutes");
@@ -5,13 +8,9 @@ const orderRoutes = require("./routes/orderRoutes");
 const itemRoutes = require("./routes/itemRoutes");
 const { verifyToken } = require("./middleware/auth");
 const pool = require("./config/db");
-const dotenv = require("dotenv");
+
 const PORT = process.env.PORT || 5000;
 const app = express();
-
-
-dotenv.config();
-
 
 app.use(
   cors({
