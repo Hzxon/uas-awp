@@ -1,6 +1,14 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
+
+// 🔴 TAMBAHKAN 3 BARIS INI UNTUK DEBUGGING 🔴
+console.log("--- DEBUG START ---");
+console.log("1. Nilai dari .env:", import.meta.env.VITE_API_URL);
+console.log("2. API_BASE_URL yang dipakai:", API_BASE_URL);
+console.log("--- DEBUG END ---");
 
 const request = async (path, { method = "GET", body, token } = {}) => {
+   // Tambahkan log ini juga di dalam request
+  console.log(`3. Requesting ke URL: ${API_BASE_URL}${path}`);
   const headers = { "Content-Type": "application/json" };
   if (token) {
     headers.Authorization = `Bearer ${token}`;
@@ -9,6 +17,7 @@ const request = async (path, { method = "GET", body, token } = {}) => {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method,
     headers,
+    credentials: "include", // ⬅️ TAMBAHKAN INI (agar match dengan backend cors)
     body: body ? JSON.stringify(body) : undefined,
   });
 

@@ -1,5 +1,5 @@
 const dotenv = require("dotenv");
-dotenv.config(); // ⬅️ load .env PALING AWAL
+dotenv.config();
 
 const express = require("express");
 const cors = require("cors");
@@ -9,41 +9,38 @@ const itemRoutes = require("./routes/itemRoutes");
 const { verifyToken } = require("./middleware/auth");
 const pool = require("./config/db");
 
-const PORT = process.env.PORT || 5000;
+// 🔥 PENTING: Tetap gunakan Port 5001 karena 5000 bermasalah di Mac
+const PORT = process.env.PORT || 5001;
 const app = express();
 
-app.use(
-  cors({
-    origin: process.env.FRONTEND_ORIGIN || "*",
-  })
-);
+// --- CONFIG CORS FINAL (YANG TERBUKTI BERHASIL) ---
+app.use(cors({
+  origin: ["http://localhost:5173", "http://127.0.0.1:5173"], // Whitelist frontend
+  credentials: true, // Wajib agar cookie/session jalan
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
 
 app.use(express.json());
 
-app.get("/api/health", (req, res) => {
-  res.json({ status: "ok" });
-});
-
-app.get("/api/db-test", async (req, res) => {
-  try {
-    const [rows] = await pool.query("SELECT 1 AS result");
-    res.json({ success: true, rows });
-  } catch (err) {
-    console.error("DB TEST ERROR:", err);
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-app.use("/api/auth", authRoutes);
+// --- ROUTES ASLI DIHIDUPKAN KEMBALI ---
+app.use("/api/auth", authRoutes); // Di sini route /me dan /login yang asli berada
 app.use("/api/orders", verifyToken, orderRoutes);
 app.use("/api/items", itemRoutes);
 
+// Health Check
+app.get("/api/health", (req, res) => {
+  res.json({ status: "ok", port: PORT });
+});
+
+// 404 Handler
 app.use((req, res) => {
   res.status(404).json({ success: false, message: "Route not found" });
 });
 
+// Error Handler
 app.use((err, req, res, next) => {
-  console.error("Unhandled error:", err);
+  console.error("Server Error:", err);
   res.status(500).json({ success: false, message: "Terjadi kesalahan pada server" });
 });
 
@@ -53,13 +50,13 @@ const startServer = async () => {
         await connection.ping(); 
         connection.release(); 
         app.listen(PORT, () => {
-            console.log(`Server is running on http://localhost:${PORT}`); 
-            console.log("Connected to the database successfully");
+            console.log(`✅ Server REAL running on http://localhost:${PORT}`); 
+            console.log("✅ Database connected successfully");
         });
     } catch (err) {
-        console.error("Unable to connect to the database: ", err);
-        process.exit(1);
+        console.error("❌ Database Connection Failed: ", err);
+        // Jangan exit process agar server tetap nyala untuk debugging jika DB error
     }
 };
 
-startServer(); 
+startServer();
