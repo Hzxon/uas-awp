@@ -131,6 +131,7 @@ const App = () => {
                                 cartCount={cartCount} 
                                 userName={userName}
                                 openModal={openModal} 
+                                initialScrollTarget={location.state?.targetId}
                                 // Asumsi ProfilePage adalah versi LandingPage dengan konten yang berbeda atau dialihkan ke halaman lain
                             />
                         </ProtectedRoute>
