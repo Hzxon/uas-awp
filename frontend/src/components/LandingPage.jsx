@@ -16,22 +16,36 @@ const HeroSection = () => (
                 </a>
             </div>
             <div className="mt-8 lg:mt-0 lg:w-1/3">
-                 
+                 {/* ... (Konten visual/image placeholder) ... */}
             </div>
         </div>
     </section>
 );
 
-const LandingPage = ({ isLoggedIn, onLogout, onAddToCart, cartCount, userName, openModal }) => {
+// Menerima prop BARU: initialScrollTarget
+const LandingPage = ({ 
+    isLoggedIn, onLogout, onAddToCart, cartCount, userName, openModal, 
+    initialScrollTarget // <--- PROPS BARU DARI App.jsx
+}) => {
     const [activeSection, setActiveSection] = useState('beranda');
 
-    // ... (Logika IntersectionObserver tetap sama)
+    // FUNGSI INTI UNTUK SCROLL: Dipanggil oleh Navbar
+    const scrollToSection = (id) => {
+        const element = document.getElementById(id);
+        if (element) {
+            setActiveSection(id);
+            element.scrollIntoView({ behavior: 'smooth' });
+        }
+    };
+
+    // LOGIKA PERBAIKAN 1: Logika IntersectionObserver (tetap sama)
     useEffect(() => {
         const sections = ['beranda', 'layanan-lengkap', 'produk-lengkap'];
         
         const observerOptions = {
             root: null,
-            rootMargin: '0px 0px -50% 0px',
+            // Mengatur rootMargin agar observer mendeteksi section yang sedang dilihat
+            rootMargin: '0px 0px -50% 0px', 
             threshold: 0.1,
         };
 
@@ -56,13 +70,17 @@ const LandingPage = ({ isLoggedIn, onLogout, onAddToCart, cartCount, userName, o
     }, []);
 
 
-    const scrollToSection = (id) => {
-        const element = document.getElementById(id);
-        if (element) {
-            setActiveSection(id);
-            element.scrollIntoView({ behavior: 'smooth' });
+    // LOGIKA PERBAIKAN 2: Scroll Otomatis & Penyesuaian Active Section saat Navigasi Balik
+    useEffect(() => {
+        if (initialScrollTarget) {
+            // Panggil fungsi scroll untuk memindahkan halaman
+            scrollToSection(initialScrollTarget);
+            // Secara eksplisit atur active section saat navigasi dari CartPage
+            // Walaupun scrollToSection sudah mengaturnya, ini memastikan state langsung benar.
+            setActiveSection(initialScrollTarget);
         }
-    };
+    }, [initialScrollTarget]); // Efek hanya berjalan saat initialScrollTarget berubah
+
 
     return (
         <div className="bg-blue-50 min-h-screen"> 
@@ -70,8 +88,8 @@ const LandingPage = ({ isLoggedIn, onLogout, onAddToCart, cartCount, userName, o
                 cartCount={cartCount} 
                 isLoggedIn={isLoggedIn} 
                 onLogout={onLogout}
-                onScroll={scrollToSection} 
-                activeSection={activeSection} 
+                onScroll={scrollToSection} // <--- PROPS SMOOTH SCROLL DITERUSKAN DENGAN BENAR
+                activeSection={activeSection} // <--- STATE ACTIVE SECTION YANG DIPERBAIKI
                 userName={userName}
                 openModal={openModal}
             />
@@ -80,9 +98,8 @@ const LandingPage = ({ isLoggedIn, onLogout, onAddToCart, cartCount, userName, o
                 <HeroSection />
                 
                 <FeaturedServices onAddToCart={onAddToCart} />
-                <FeaturedProducts onAddToCart={onAddToCart} />
                 
-                {/* 5. Layanan Lengkap (Target Scroll) */}
+                {/* 1. Layanan Lengkap (Target Scroll) */}
                 <section id="layanan-lengkap" className="pt-16 mb-16">
                     <h2 className="text-3xl font-bold text-gray-800 mb-8">🧺 Semua Layanan Kami</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -90,7 +107,6 @@ const LandingPage = ({ isLoggedIn, onLogout, onAddToCart, cartCount, userName, o
                             <h3 className="text-xl font-bold mb-2">Cuci Kiloan Reguler</h3>
                             <p className="text-gray-600">Cuci, setrika, lipat. Selesai dalam 3 hari.</p>
                             <p className="text-2xl font-bold text-green-600 mt-3">Rp 8.000/kg</p>
-                            {/* Memanggil onAddToCart dengan data item */}
                             <button className="mt-4 text-blue-600 font-medium hover:text-blue-800" 
                                     onClick={() => onAddToCart({id: 'svc-reg', name: 'Cuci Kiloan Reguler', price: 8000, type: 'Layanan', unit: 'kg'})}>
                                 + Keranjang
@@ -100,11 +116,12 @@ const LandingPage = ({ isLoggedIn, onLogout, onAddToCart, cartCount, userName, o
                     </div>
                 </section>
                 
-                {/* 6. Produk Lengkap (Target Scroll) */}
+                {/* 2. Produk Lengkap (Target Scroll) */}
                 <section id="produk-lengkap" className="pt-16 mb-16">
-                    <h2 className="text-3xl font-bold text-gray-800 mb-8">🧴 Katalog Lengkap Produk Laundry</h2>
-                    {/* ... Konten Produk Lengkap ... */}
+                    {/* Placeholder untuk konten produk lengkap */}
+                    <FeaturedProducts onAddToCart={onAddToCart} isFullSection={true} /> 
                 </section>
+                
             </main>
             
             <Footer />

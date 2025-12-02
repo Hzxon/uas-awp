@@ -138,40 +138,41 @@ const App = () => {
           }
         />
 
-        <Route
-          path="/cart"
-          element={
-            <ProtectedRoute isLoggedIn={isLoggedIn} onRequireAuth={requireLogin}>
-              <CartPage
-                isLoggedIn={isLoggedIn}
-                userName={user?.nama || ""}
-                onLogout={handleLogout}
-                cartCount={cartCount}
-                cartItems={cartItems}
-                onUpdateQuantity={handleUpdateQuantity}
-                authToken={authToken}
-                onOrderPlaced={handleOrderPlaced}
-              />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute isLoggedIn={isLoggedIn} onRequireAuth={requireLogin}>
-              <LandingPage
-                isLoggedIn={isLoggedIn}
-                onLogout={handleLogout}
-                onAddToCart={handleAddToCart}
-                cartCount={cartCount}
-                userName={user?.nama || ""}
-                openModal={openModal}
-              />
-            </ProtectedRoute>
-          }
-        />
-      </Routes>
+                {/* Halaman Cart (Dilindungi) */}
+                <Route
+                    path="/cart"
+                    element={
+                        <ProtectedRoute isLoggedIn={isLoggedIn}>
+                            <CartPage 
+                                isLoggedIn={isLoggedIn} // Perlu agar navbar muncul
+                                userName={userName} // Perlu agar navbar muncul
+                                onLogout={handleLogout} // Perlu agar navbar muncul
+                                cartCount={cartCount} // Perlu agar navbar muncul
+                                cartItems={cartItems} 
+                                onUpdateQuantity={handleUpdateQuantity}
+                            />
+                        </ProtectedRoute>
+                    }
+                />
+                
+                {/* Halaman Profil dan rute lainnya... */}
+                 <Route
+                    path="/profile"
+                    element={
+                        <ProtectedRoute isLoggedIn={isLoggedIn}>
+                             <LandingPage 
+                                isLoggedIn={isLoggedIn} 
+                                onLogout={handleLogout} 
+                                onAddToCart={handleAddToCart} 
+                                cartCount={cartCount} 
+                                userName={userName}
+                                openModal={openModal} 
+                                // Asumsi ProfilePage adalah versi LandingPage dengan konten yang berbeda atau dialihkan ke halaman lain
+                            />
+                        </ProtectedRoute>
+                    }
+                />
+            </Routes>
 
       {isModalOpen && (
         <ModalAuth
