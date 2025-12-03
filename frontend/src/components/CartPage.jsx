@@ -5,6 +5,7 @@ import Footer from './Footer';
 import CheckoutModal from './CheckoutModal';
 import ExitConfirmationModal from './ExitConfirmationModal';
 import { orderApi } from '../api';
+// import { format } from '../../../backend/src/config/db';
 
 const CartPage = ({ cartItems, onUpdateQuantity, isLoggedIn, userName, onLogout, cartCount, authToken, onOrderPlaced }) => {
     
@@ -95,6 +96,7 @@ const CartPage = ({ cartItems, onUpdateQuantity, isLoggedIn, userName, onLogout,
                 total: parseInt(finalTotal), // Pastikan integer
                 deliveryFee: deliveryFeeValue,
                 taxRate,
+                subtotal: 100000, 
             };
             
             console.log("🔥 Payload Fixed:", JSON.stringify(payload, null, 2));

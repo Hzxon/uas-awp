@@ -6,7 +6,7 @@ console.log("1. Nilai dari .env:", import.meta.env.VITE_API_URL);
 console.log("2. API_BASE_URL yang dipakai:", API_BASE_URL);
 console.log("--- DEBUG END ---");
 
-const request = async (path, { method = "GET", body, token } = {}) => {
+const request = async (path, { method = "GET", token, body } = {}) => {
    // Tambahkan log ini juga di dalam request
   console.log(`3. Requesting ke URL: ${API_BASE_URL}${path}`);
   const headers = { "Content-Type": "application/json" };
@@ -14,6 +14,7 @@ const request = async (path, { method = "GET", body, token } = {}) => {
     headers.Authorization = `Bearer ${token}`;
   }
 
+  console.log("Body Subtotal: ", body);
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method,
     headers,
@@ -39,7 +40,7 @@ export const authApi = {
 };
 
 export const orderApi = {
-  create: (token, payload) => request("/orders", { method: "POST", body: payload, token }),
+  create: (token, payload) => request("/orders", { method: "POST", token, body: payload }),
   list: (token) => request("/orders", { token }),
 };
 

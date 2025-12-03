@@ -5,9 +5,9 @@ import ServicesDetail from './ServicesDetail';
 // Data Layanan Lengkap, DILENGKAPI dengan detail (longDescription dan details) untuk Modal
 const services = [
     { 
-        id: "svc-coin", 
-        name: "Laundry Coin Cepat", 
-        price: 12000, 
+        id: 1, 
+        name: "Cuci Kering", 
+        price: 6000, 
         unit: "kg", 
         iconClass: "fas fa-coins text-yellow-500", 
         description: "Cuci cepat 60 menit, hemat energi, harga terjangkau.", 
@@ -15,9 +15,9 @@ const services = [
         details: ["60 menit selesai", "Hemat energi", "Harga terbaik"] 
     },
     { 
-        id: "svc-towel", 
-        name: "Pencucian Handuk Eksklusif", 
-        price: 15000, 
+        id: 2, 
+        name: "Cuci + Setrika", 
+        price: 8000, 
         unit: "kg", 
         iconClass: "fas fa-hand-holding-water text-blue-400", 
         description: "Layanan khusus untuk handuk, menghilangkan bau apek dan kuman.", 
@@ -25,9 +25,9 @@ const services = [
         details: ["Anti-bakteri", "Pelembut handuk premium", "Menghilangkan bau apek"] 
     },
     { 
-        id: "svc-dry", 
-        name: "Jasa Pengeringan Cepat", 
-        price: 10000, 
+        id: 3, 
+        name: "Setrika Saja", 
+        price: 5000, 
         unit: "kg", 
         iconClass: "fas fa-sun text-orange-500", 
         description: "Keringkan pakaian Anda 100% menggunakan mesin pengering profesional.", 
@@ -36,9 +36,20 @@ const services = [
     },
     // Menambahkan layanan sepatu untuk contoh yang lebih lengkap
     { 
-        id: "svc-shoe", 
-        name: "Cuci Sepatu Premium", 
-        price: 35000, 
+        id: 4, 
+        name: "Dry Cleaning", 
+        price: 15000, 
+        unit: "pasang", 
+        iconClass: "fas fa-shoe-prints text-brown-600", 
+        description: "Pencucian mendalam untuk semua jenis sepatu (sneakers, kulit, dll.) dengan cairan khusus. Termasuk perlakuan anti-bakteri.", 
+        longDescription: "Perawatan sepatu yang dilakukan oleh ahli kami. Menggunakan sikat dan cairan khusus sesuai bahan sepatu Anda. Termasuk deep cleaning dan anti-bakteri.", 
+        details: ["Perawatan profesional", "Cairan khusus", "Anti-bakteri & Deodorizing"] 
+    },
+
+    { 
+        id: 5, 
+        name: "Cuci Selimut", 
+        price: 25000, 
         unit: "pasang", 
         iconClass: "fas fa-shoe-prints text-brown-600", 
         description: "Pencucian mendalam untuk semua jenis sepatu (sneakers, kulit, dll.) dengan cairan khusus. Termasuk perlakuan anti-bakteri.", 

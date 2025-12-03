@@ -18,6 +18,7 @@ const sanitizeItems = (items = []) => {
 };
 
 exports.createOrder = async (req, res) => {
+  console.log("Masuk ke api createOrder!");
   try {
     const userId = req.user.id;
     const tanggal = new Date(); 
@@ -60,8 +61,8 @@ exports.createOrder = async (req, res) => {
       // PERBAIKAN: Disesuaikan dengan screenshot tabel (hanya user_id, tanggal, total, status)
       // Hapus: subtotal, tax_amount, delivery_fee karena kolomnya TIDAK ADA di tabel orders kamu
       const [orderResult] = await connection.query(
-        "INSERT INTO orders (user_id, tanggal, total, status) VALUES (?, ?, ?, ?)",
-        [userId, tanggal, total, "pending"]
+        "INSERT INTO orders (user_id, subtotal, tax_amount, delivery_fee, total, tanggal, status) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        [userId, subtotal, taxAmount, deliveryFee, total, tanggal, "pending"]
       );
 
       const orderId = orderResult.insertId;
@@ -113,7 +114,7 @@ exports.listOrders = async (req, res) => {
   try {
     // PERBAIKAN: Query Select juga disesuaikan agar tidak error field not found
     const [orders] = await pool.query(
-      "SELECT id, total, status, tanggal FROM orders WHERE user_id = ? ORDER BY id DESC",
+      "SELECT * FROM orders WHERE user_id = ? ORDER BY id DESC",
       [req.user.id]
     );
     return res.json({ success: true, orders });
