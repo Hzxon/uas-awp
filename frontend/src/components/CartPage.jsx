@@ -122,6 +122,7 @@ const CartPage = ({ cartItems, onUpdateQuantity, isLoggedIn, userName, onLogout,
         <div className="bg-blue-50 min-h-screen">
             <Navbar 
                 cartCount={cartCount} 
+                cartItems={cartItems}
                 isLoggedIn={isLoggedIn} 
                 userName={userName}
                 onLogout={onLogout}

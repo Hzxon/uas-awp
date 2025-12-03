@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import MiniCartPreview from './MiniCartPreview'; 
 
-const Navbar = ({ cartCount, isLoggedIn, onLogout, onScroll, activeSection, userName, openModal, onNavigating }) => {
+const Navbar = ({ cartCount, cartItems = [], isLoggedIn, onLogout, onScroll, activeSection, userName, openModal, onNavigating }) => {
     
     // State untuk mengontrol tampilan Mini Cart
     const [isCartHovered, setIsCartHovered] = useState(false);
@@ -76,6 +76,7 @@ const Navbar = ({ cartCount, isLoggedIn, onLogout, onScroll, activeSection, user
                             {isCartHovered && (
                                 <MiniCartPreview 
                                     cartCount={cartCount} 
+                                    items={cartItems}
                                     isLoggedIn={isLoggedIn}
                                     openLoginModal={openModal}
                                 />

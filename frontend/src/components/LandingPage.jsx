@@ -23,7 +23,7 @@ const HeroSection = () => (
 );
 
 const LandingPage = ({ 
-    isLoggedIn, onLogout, onAddToCart, cartCount, userName, openModal,
+    isLoggedIn, onLogout, onAddToCart, cartCount, cartItems, userName, openModal,
 }) => {
     const [activeSection, setActiveSection] = useState('beranda');
 
@@ -72,6 +72,7 @@ const LandingPage = ({
         <div className="bg-blue-50 min-h-screen"> 
             <Navbar 
                 cartCount={cartCount} 
+                cartItems={cartItems}
                 isLoggedIn={isLoggedIn} 
                 onLogout={onLogout}
                 onScroll={scrollToSection} // <--- PROPS SMOOTH SCROLL DITERUSKAN DENGAN BENAR

@@ -128,6 +128,7 @@ const App = () => {
               onLogout={handleLogout}
               onAddToCart={handleAddToCart}
               cartCount={cartCount}
+              cartItems={cartItems}
               userName={user?.nama || ""}
               openModal={openModal}
             />
@@ -157,13 +158,14 @@ const App = () => {
           element={
             <ProtectedRoute isLoggedIn={isLoggedIn} onRequireAuth={requireLogin}>
               <LandingPage
-                isLoggedIn={isLoggedIn}
-                onLogout={handleLogout}
-                onAddToCart={handleAddToCart}
-                cartCount={cartCount}
-                userName={user?.nama || ""}
-                openModal={openModal}
-              />
+              isLoggedIn={isLoggedIn}
+              onLogout={handleLogout}
+              onAddToCart={handleAddToCart}
+              cartCount={cartCount}
+              cartItems={cartItems}
+              userName={user?.nama || ""}
+              openModal={openModal}
+            />
             </ProtectedRoute>
           }
         />

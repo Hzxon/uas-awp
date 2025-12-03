@@ -50,7 +50,7 @@ exports.createOrder = async (req, res) => {
         : DEFAULT_TAX_RATE;
 
     const taxAmount = Math.round(subtotal * taxRate);
-    const total = subtotal + taxAmount + deliveryFee;
+    const total_pembayaran = subtotal + taxAmount + deliveryFee;
 
     const connection = await pool.getConnection();
 
@@ -61,8 +61,8 @@ exports.createOrder = async (req, res) => {
       // PERBAIKAN: Disesuaikan dengan screenshot tabel (hanya user_id, tanggal, total, status)
       // Hapus: subtotal, tax_amount, delivery_fee karena kolomnya TIDAK ADA di tabel orders kamu
       const [orderResult] = await connection.query(
-        "INSERT INTO orders (user_id, subtotal, tax_amount, delivery_fee, total, tanggal, status) VALUES (?, ?, ?, ?, ?, ?, ?)",
-        [userId, subtotal, taxAmount, deliveryFee, total, tanggal, "pending"]
+        "INSERT INTO orders (user_id, subtotal, tax_amount, delivery_fee, total_pembayaran, tanggal, status) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        [userId, subtotal, taxAmount, deliveryFee, total_pembayaran, tanggal, "pending"]
       );
 
       const orderId = orderResult.insertId;
@@ -91,7 +91,7 @@ exports.createOrder = async (req, res) => {
         success: true,
         message: "Pesanan berhasil dibuat",
         orderId,
-        summary: { subtotal, taxAmount, deliveryFee, total },
+        summary: { subtotal, taxAmount, deliveryFee, total_pembayaran },
       });
 
     } catch (err) {

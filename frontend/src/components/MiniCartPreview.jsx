@@ -2,19 +2,23 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 // Data Dummy Keranjang (Ganti dengan data keranjang Anda yang sebenarnya)
-const dummyCartItems = [
-    { id: 'item1', name: 'Laundry Coin Cepat', unit: 'kg', price: 12000, quantity: 2.5 },
-    { id: 'item2', name: 'Pencucian Handuk Eksklusif', unit: 'kg', price: 15000, quantity: 1 },
-];
+// const dummyCartItems = [
+//     { id: 'item1', name: 'Laundry Coin Cepat', unit: 'kg', price: 12000, quantity: 2.5 },
+//     { id: 'item2', name: 'Pencucian Handuk Eksklusif', unit: 'kg', price: 15000, quantity: 1 },
+// ];
 
 /**
  * Komponen Mini Cart Preview.
  * Menampilkan ringkasan keranjang atau pesan login/kosong berdasarkan state.
  */
-const MiniCartPreview = ({ items = dummyCartItems, cartCount = 3, isLoggedIn, openLoginModal }) => {
+
+const MiniCartPreview = ({ items = [], cartCount = 0, isLoggedIn, openLoginModal = () => {} }) => {
     
-    const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const shippingFee = 0; 
+    const subtotal = items.reduce((sum, item) => {
+        const qty = item.qty ?? item.quantity ?? 0;
+        return sum + (item.price * qty);
+    }, 0);
+    const shippingFee = 0; // karena belum login, ga tau alamat di mana makanya di kosongin buat fee deliverynya 
     let content;
 
     // --- SKENARIO 1: BELUM LOGIN ---
@@ -61,11 +65,11 @@ const MiniCartPreview = ({ items = dummyCartItems, cartCount = 3, isLoggedIn, op
                             <div className="flex-grow pr-2">
                                 <p className="font-medium text-gray-700 truncate">{item.name}</p>
                                 <p className="text-xs text-gray-500">
-                                    {item.quantity} {item.unit} x Rp {item.price.toLocaleString('id-ID')}
+                                    {(item.qty ?? item.quantity ?? 0)} {item.unit} x Rp {item.price.toLocaleString('id-ID')}
                                 </p>
                             </div>
                             <span className="font-semibold text-gray-800">
-                                Rp {(item.price * item.quantity).toLocaleString('id-ID')}
+                                Rp {(item.price * (item.qty ?? item.quantity ?? 0)).toLocaleString('id-ID')}
                             </span>
                         </div>
                     ))}
