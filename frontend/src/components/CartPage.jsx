@@ -200,8 +200,7 @@ const CartPage = ({ cartItems, onUpdateQuantity, isLoggedIn, userName, onLogout,
                             <button 
                                 onClick={handleOpenCheckout} 
                                 className="w-full mt-6 bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition duration-200 shadow-md transform hover:scale-[1.01]">
-                                Proses Pembayaran
-                            </button>
+                                Proses Pembayaran                            </button>
                             <Link to="/" className="w-full mt-3 inline-block text-center text-blue-600 hover:text-blue-800 font-medium">
                                 &larr; Lanjut Belanja
                             </Link>
