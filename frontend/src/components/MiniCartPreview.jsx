@@ -48,9 +48,9 @@ const MiniCartPreview = ({ items = [], cartCount = 0, isLoggedIn, openLoginModal
                 <p className="text-gray-600 text-sm">
                     Yuk, pilih layanan atau produk andalan WashFast!
                 </p>
-                <Link to="/layanan" className="inline-block border border-green-500 text-green-600 py-2 px-4 rounded-lg text-sm font-medium hover:bg-green-50 transition duration-150 w-full">
+                <a href="#layanan-terbaik" className="inline-block border border-green-500 text-green-600 py-2 px-4 rounded-lg text-sm font-medium hover:bg-green-50 transition duration-150 w-full">
                     Mulai Pesan
-                </Link>
+                </a>
             </div>
         );
     } 
