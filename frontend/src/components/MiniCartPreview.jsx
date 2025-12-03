@@ -26,7 +26,6 @@ const MiniCartPreview = ({ items = dummyCartItems, cartCount = 3, isLoggedIn, op
                 <p className="text-gray-600 text-sm">
                     Silakan masuk atau daftar untuk menyimpan pesanan Anda.
                 </p>
-                {/* Tombol yang memicu modal login di komponen induk */}
                 <button 
                     onClick={() => openLoginModal('login')}
                     className="inline-block bg-blue-600 text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-blue-700 transition duration-150 shadow-md w-full"
@@ -85,10 +84,16 @@ const MiniCartPreview = ({ items = dummyCartItems, cartCount = 3, isLoggedIn, op
                 </div>
 
                 <div className="p-4 bg-gray-50 border-t flex space-x-2">
+                    {/* Link ini HANYA ke CartPage */}
                     <Link to="/cart" className="flex-1 text-center py-2 text-sm rounded-lg border border-green-500 text-green-600 hover:bg-green-50 transition duration-150">
                         Lihat Keranjang
                     </Link>
-                    <Link to="/checkout" className="flex-1 text-center py-2 text-sm rounded-lg bg-green-500 text-white hover:bg-green-600 transition duration-150">
+                    {/* Link ini MENGIRIM STATE untuk membuka modal */}
+                    <Link 
+                        to="/cart" 
+                        state={{ openCheckout: true }} 
+                        className="flex-1 text-center py-2 text-sm rounded-lg bg-green-500 text-white hover:bg-green-600 transition duration-150"
+                    >
                         Checkout
                     </Link>
                 </div>
@@ -97,11 +102,9 @@ const MiniCartPreview = ({ items = dummyCartItems, cartCount = 3, isLoggedIn, op
     }
 
     return (
-        // Mini Cart Container (z-index tinggi)
         <div 
             className="absolute right-0 w-80 max-w-sm bg-white rounded-xl shadow-2xl border border-gray-100 z-[1000] 
                        transform origin-top-right transition duration-300 ease-out"
-            // Penting: Menggunakan top: 100% dan tidak ada margin atas yang besar
             style={{ 
                 right: '0', 
                 top: '100%', 

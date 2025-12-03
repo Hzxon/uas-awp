@@ -61,14 +61,13 @@ const Navbar = ({ cartCount, isLoggedIn, onLogout, onScroll, activeSection, user
                     {/* Cart dan User Action (Conditional Rendering) */}
                     <div className="flex items-center space-x-4">
                         
-                        {/* 🌟 CONTAINER HOVER STABIL 🌟 */}
+                        {/* CONTAINER HOVER STABIL (dengan py-4) */}
                         <div 
-                            // Menggunakan py-4 untuk membuat area hover vertikal lebih besar, mengatasi gap
                             className="relative inline-block py-4 group" 
                             onMouseEnter={() => setIsCartHovered(true)}
                             onMouseLeave={() => setIsCartHovered(false)}
                         >
-                            {/* Ikon Keranjang */}
+                            {/* Ikon Keranjang (Link) */}
                             <Link to="/cart" className="text-gray-500 hover:text-blue-600 relative p-2 transition duration-150">
                                 {CartIconContent}
                             </Link>

@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useMemo, useState, useEffect } from 'react'; // FIX: Tambah useEffect
+import { Link, useNavigate, useLocation } from 'react-router-dom'; // FIX: Tambah useLocation
 import Navbar from './Navbar'; 
 import Footer from './Footer'; 
 import CheckoutModal from './CheckoutModal';
@@ -9,12 +9,25 @@ import { orderApi } from '../api';
 const CartPage = ({ cartItems, onUpdateQuantity, isLoggedIn, userName, onLogout, cartCount, authToken, onOrderPlaced }) => {
     
     const navigate = useNavigate();
+    const location = useLocation(); // FIX: Gunakan useLocation
+    
     const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     
     const [isExitModalOpen, setIsExitModalOpen] = useState(false);
     const [targetSection, setTargetSection] = useState(null);
 
+    // 🌟 EFEK BARU: Membuka Modal Checkout Otomatis dari Navigasi 🌟
+    useEffect(() => {
+        // Cek apakah state 'openCheckout' ada
+        if (location.state?.openCheckout) {
+            handleOpenCheckout();
+            
+            // Hapus state agar modal tidak muncul lagi setelah navigasi
+            navigate(location.pathname, { replace: true, state: {} });
+        }
+    }, [location.state, navigate]); 
+    
     const handleNavAttempt = (id) => {
         setTargetSection(id);
         setIsExitModalOpen(true);
@@ -40,6 +53,10 @@ const CartPage = ({ cartItems, onUpdateQuantity, isLoggedIn, userName, onLogout,
     const handleOpenCheckout = () => {
         if (cartItems.length === 0) {
             alert("Keranjang masih kosong!");
+            return;
+        }
+        if (!isLoggedIn) {
+            alert("Silakan login dahulu untuk melanjutkan pembayaran.");
             return;
         }
         setIsCheckoutModalOpen(true);
