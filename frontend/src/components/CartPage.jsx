@@ -45,6 +45,7 @@ const CartPage = ({ cartItems, onUpdateQuantity, isLoggedIn, userName, onLogout,
         setIsCheckoutModalOpen(true);
     };
 
+    // --- BAGIAN UTAMA YANG DIPERBAIKI ---
     const handleConfirmOrder = async () => {
         if (!authToken) {
             alert("Sesi login berakhir, silakan login kembali.");
@@ -53,21 +54,50 @@ const CartPage = ({ cartItems, onUpdateQuantity, isLoggedIn, userName, onLogout,
 
         setIsSubmitting(true);
         try {
-            await orderApi.create(authToken, {
-                items: cartItems,
+            // 1. TRANSFORMASI DATA (MAPPING CERDAS)
+            const formattedItems = cartItems.map((item) => {
+                // Deteksi tipe item: Apakah 'Layanan' atau 'Produk'?
+                // Default ke 'Layanan' jika properti type tidak ada untuk keamanan
+                const isLayanan = !item.type || item.type === 'Layanan';
+
+                return {
+                    // Jika Layanan: isi layanan_id, kosongkan produk_id
+                    // Jika Produk: kosongkan layanan_id, isi produk_id
+                    layanan_id: isLayanan ? item.id : null,
+                    produk_id: !isLayanan ? (item.productId || item.id) : null,
+                    
+                    qty: parseInt(item.qty),
+                    harga_satuan: parseInt(item.price),
+                    subtotal: parseInt(item.price) * parseInt(item.qty)
+                };
+            });
+
+            // 2. SIAPKAN PAYLOAD LENGKAP
+            const payload = {
+                items: formattedItems,
+                total: parseInt(finalTotal), // Pastikan integer
                 deliveryFee: deliveryFeeValue,
                 taxRate,
-            });
+            };
+            
+            console.log("🔥 Payload Fixed:", JSON.stringify(payload, null, 2));
+
+            // 3. KIRIM KE API
+            await orderApi.create(authToken, payload);
+            
             alert(`Pesanan Rp ${finalTotal.toLocaleString('id-ID')} berhasil dibuat. Terima kasih, ${userName || 'pelanggan'}!`);
             setIsCheckoutModalOpen(false);
-            onOrderPlaced?.();
+            if (onOrderPlaced) onOrderPlaced();
             navigate('/');
         } catch (err) {
-            alert(err.message || "Gagal memproses pesanan");
+            console.error("Order Error:", err);
+            // Tampilkan pesan error spesifik dari backend jika ada
+            alert(err.message || "Gagal memproses pesanan. Cek koneksi atau coba lagi.");
         } finally {
             setIsSubmitting(false);
         }
     };
+    // ------------------------------------
 
     return (
         <div className="bg-blue-50 min-h-screen">
