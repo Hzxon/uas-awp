@@ -8,6 +8,7 @@ const orderRoutes = require("./routes/orderRoutes");
 const itemRoutes = require("./routes/itemRoutes");
 const { verifyToken } = require("./middleware/auth");
 const pool = require("./config/db");
+const masterRoutes = require("./routes/masterRoutes");
 
 // 🔥 PENTING: Tetap gunakan Port 5001 karena 5000 bermasalah di Mac
 const PORT = process.env.PORT || 5001;
@@ -27,6 +28,7 @@ app.use(express.json());
 app.use("/api/auth", authRoutes); // Di sini route /me dan /login yang asli berada
 app.use("/api/orders", verifyToken, orderRoutes);
 app.use("/api/items", itemRoutes);
+app.use("/api", masterRoutes);
 
 // Health Check
 app.get("/api/health", (req, res) => {
@@ -58,5 +60,6 @@ const startServer = async () => {
         // Jangan exit process agar server tetap nyala untuk debugging jika DB error
     }
 };
+
 
 startServer();

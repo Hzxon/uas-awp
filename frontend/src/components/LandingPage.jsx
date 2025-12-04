@@ -3,6 +3,7 @@ import Navbar from './Navbar';
 import FeaturedProducts from './FeaturedProducts';
 import FeaturedServices from './FeaturedServices';
 import Footer from './Footer';
+import { layananApi } from '../api';
 
 const HeroSection = () => (
     <section id="beranda" className="mb-16">
@@ -27,6 +28,8 @@ const LandingPage = ({
 }) => {
     const [activeSection, setActiveSection] = useState('beranda');
 
+    const [services, setServices] = useState([]);
+
     // FUNGSI INTI UNTUK SCROLL: Dipanggil oleh Navbar
     const scrollToSection = (id) => {
         const element = document.getElementById(id);
@@ -35,6 +38,21 @@ const LandingPage = ({
             element.scrollIntoView({ behavior: 'smooth' });
         }
     };
+
+    useEffect(() => {
+        const fetchLayanan = async () => {
+            try {
+                const data = await layananApi.list();   // ✅ request() SUDAH return data JSON
+                console.log("✅ Res layanan:", data);
+                setServices(Array.isArray(data) ? data : []);  // ✅ jaga-jaga kalau bukan array
+            } catch (err) {
+                console.error("❌ Gagal mengambil layanan:", err);
+                setServices([]); // jangan biarkan jadi undefined
+            }
+        };
+        fetchLayanan();
+    }, []);
+
 
     // LOGIKA PERBAIKAN 1: Logika IntersectionObserver (tetap sama)
     useEffect(() => {
@@ -67,6 +85,31 @@ const LandingPage = ({
         return () => observer.disconnect();
     }, []);
 
+    const getServiceEmoji = (name) => {
+        if (!name) return "🧺";
+
+        const lower = name.toLowerCase();
+
+        // 1. Cuci Kering (per Kg)
+        if (lower.includes("cuci kering")) return "🧺";
+
+        // 2. Cuci + Setrika (per Kg)
+        if (lower.includes("cuci + setrika") || (lower.includes("cuci") && lower.includes("setrika"))) {
+            return "👕";
+        }
+
+        // 3. Setrika Saja (per Kg)
+        if (lower.includes("setrika saja")) return "🧼";
+
+        // 4. Dry Cleaning (per item)
+        if (lower.includes("dry cleaning")) return "💧";
+
+        // 5. Cuci Selimut / Bedcover (per item)
+        if (lower.includes("selimut") || lower.includes("bedcover")) return "🛏️";
+
+        // Default kalau tidak match apa pun
+        return "🧽";
+    };
 
     return (
         <div className="bg-blue-50 min-h-screen"> 
@@ -89,25 +132,48 @@ const LandingPage = ({
                 {/* 1. Layanan Lengkap (Target Scroll) */}
                 <section id="layanan-lengkap" className="pt-16 mb-16">
                     <h2 className="text-3xl font-bold text-gray-800 mb-8">🧺 Semua Layanan Kami</h2>
+                    
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <div className="bg-white p-6 rounded-xl shadow-md border-t-4 border-blue-500">
-                            <h3 className="text-xl font-bold mb-2">Cuci Kiloan Reguler</h3>
-                            <p className="text-gray-600">Cuci, setrika, lipat. Selesai dalam 3 hari.</p>
-                            <p className="text-2xl font-bold text-green-600 mt-3">Rp 8.000/kg</p>
-                            <button className="mt-4 text-blue-600 font-medium hover:text-blue-800" 
-                                    onClick={() => onAddToCart({id: 'svc-reg', name: 'Cuci Kiloan Reguler', price: 8000, type: 'Layanan', unit: 'kg'})}>
+                        {services.length === 0 ? (
+                        <p className="text-gray-500">Memuat data layanan...</p>
+                        ) : (
+                        services.map((svc) => (
+                            <div
+                            key={svc.id}
+                            className="bg-white p-6 rounded-xl shadow-md border-t-4 border-blue-500"
+                            >
+                            <h3 className="text-xl font-bold mb-2">
+                                {getServiceEmoji(svc.nama)} {svc.nama}
+                            </h3>
+
+                            <p className="text-gray-600">
+                                {svc.deskripsi || "Layanan laundry profesional untuk kebutuhan harian Anda."}
+                            </p>
+
+                            <p className="text-2xl font-bold text-green-600 mt-3">
+                                Rp {svc.harga.toLocaleString('id-ID')}/kg
+                            </p>
+
+                            <button
+                                className="mt-4 text-blue-600 font-medium hover:text-blue-800"
+                                onClick={() =>
+                                onAddToCart({
+                                    id: svc.id,
+                                    name: svc.nama,
+                                    price: svc.harga,
+                                    type: 'Layanan',
+                                    unit: 'kg',
+                                })
+                                }
+                            >
                                 + Keranjang
                             </button>
-                        </div>
-                        {/* ... Layanan lainnya ... */}
+                            </div>
+                        ))
+                        )}
                     </div>
                 </section>
-                
-                {/* 2. Produk Lengkap (Target Scroll) */}
-                <section id="produk-lengkap" className="pt-16 mb-16">
-                    {/* Placeholder untuk konten produk lengkap */}
-                    <FeaturedProducts onAddToCart={onAddToCart} isFullSection={true} /> 
-                </section>
+
                 
             </main>
             

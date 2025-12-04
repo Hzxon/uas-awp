@@ -45,3 +45,11 @@ export const orderApi = {
 };
 
 export { API_BASE_URL };
+
+export const layananApi = {
+  list: (token) => request("/layanan", { token }), // GET /api/layanan
+};
+
+export const produkApi = {
+  list: (token) => request("/produk", { token }),  // GET /api/produk
+};
