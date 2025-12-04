@@ -3,7 +3,7 @@ import Navbar from './Navbar';
 import FeaturedProducts from './FeaturedProducts';
 import FeaturedServices from './FeaturedServices';
 import Footer from './Footer';
-import { layananApi } from '../api';
+import { layananApi, produkApi } from '../api'; 
 
 const HeroSection = () => (
     <section id="beranda" className="mb-16">
@@ -29,6 +29,7 @@ const LandingPage = ({
     const [activeSection, setActiveSection] = useState('beranda');
 
     const [services, setServices] = useState([]);
+    const [products, setProducts] = useState([]);
 
     // FUNGSI INTI UNTUK SCROLL: Dipanggil oleh Navbar
     const scrollToSection = (id) => {
@@ -39,19 +40,30 @@ const LandingPage = ({
         }
     };
 
-    useEffect(() => {
-        const fetchLayanan = async () => {
-            try {
-                const data = await layananApi.list();   // ✅ request() SUDAH return data JSON
-                console.log("✅ Res layanan:", data);
-                setServices(Array.isArray(data) ? data : []);  // ✅ jaga-jaga kalau bukan array
-            } catch (err) {
-                console.error("❌ Gagal mengambil layanan:", err);
-                setServices([]); // jangan biarkan jadi undefined
-            }
+      useEffect(() => {
+        const fetchData = async () => {
+        try {
+            const layananRes = await layananApi.list();    // kalau butuh token: layananApi.list(token)
+            console.log("✅ Res layanan:", layananRes);
+            setServices(Array.isArray(layananRes) ? layananRes : []);
+        } catch (err) {
+            console.error("❌ Gagal mengambil layanan:", err);
+            setServices([]);
+        }
+
+        try {
+            const produkRes = await produkApi.list();      // kalau butuh token: produkApi.list(token)
+            console.log("✅ Res produk:", produkRes);
+            setProducts(Array.isArray(produkRes) ? produkRes : []);
+        } catch (err) {
+            console.error("❌ Gagal mengambil produk:", err);
+            setProducts([]);
+        }
         };
-        fetchLayanan();
+
+        fetchData();
     }, []);
+
 
 
     // LOGIKA PERBAIKAN 1: Logika IntersectionObserver (tetap sama)
@@ -110,6 +122,23 @@ const LandingPage = ({
         // Default kalau tidak match apa pun
         return "🧽";
     };
+
+    const getProductEmoji = (name) => {
+        if (!name) return "📦";
+
+        const lower = name.toLowerCase();
+
+        if (lower.includes("pewangi")) return "🌸";                 // Pewangi Extra Premium
+        if (lower.includes("plastik")) return "🛍️";               // Plastik Press Tambahan
+        if (lower.includes("hanger")) return "🧥";                 // Hanger Tambahan
+        if (lower.includes("laundry net") || lower.includes("jaring"))
+            return "🧺";                                            // Laundry Net
+        if (lower.includes("stain") || lower.includes("noda"))
+            return "✨";                                            // Stain Remover Treatment
+
+        return "📦"; // default kalau tidak cocok
+    };
+
 
     return (
         <div className="bg-blue-50 min-h-screen"> 
@@ -173,6 +202,63 @@ const LandingPage = ({
                         )}
                     </div>
                 </section>
+                <section id="produk-lengkap" className="pt-16 mb-16">
+                    <h2 className="text-3xl font-bold text-gray-800 mb-8">
+                        🧴 Semua Produk Laundry Kami
+                    </h2>
+
+                    {products.length === 0 ? (
+                        <p className="text-gray-500">Memuat data produk...</p>
+                    ) : (
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                        {products.map((prod) => (
+                            <div 
+                            key={prod.id} 
+                            className="bg-white rounded-xl shadow-md p-4 flex flex-col text-center hover:shadow-lg transition"
+                            >
+                            
+                            {/* Icon */}
+                            <div className="h-20 w-20 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <span className="text-3xl">
+                                {getProductEmoji(prod.nama)}
+                                </span>
+                            </div>
+
+                            {/* NAMA PRODUK */}
+                            <h4 className="font-semibold text-gray-800">{prod.nama}</h4>
+
+                            {/* DESKRIPSI PRODUK */}
+                            <p className="text-xs text-gray-500 mt-1 mb-3">
+                                {prod.deskripsi || "Tidak ada deskripsi."}
+                            </p>
+
+                            {/* HARGA */}
+                            <p className="text-sm font-bold text-green-600">
+                                Rp {prod.harga.toLocaleString("id-ID")}
+                            </p>
+
+                            {/* BUTTON */}
+                            <button 
+                                className="bg-green-500 text-white text-sm py-2 px-4 rounded-lg mt-3 hover:bg-green-600"
+                                onClick={() =>
+                                onAddToCart({
+                                    id: prod.id,
+                                    name: prod.nama,
+                                    price: prod.harga,
+                                    type: 'Produk',
+                                    unit: 'pcs',
+                                })
+                                }
+                            >
+                                + Keranjang
+                            </button>
+
+                            </div>
+                        ))}
+                        </div>
+                    )}
+                </section>
+
 
                 
             </main>
