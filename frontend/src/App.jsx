@@ -4,6 +4,7 @@ import LandingPage from "./components/LandingPage";
 import CartPage from "./components/CartPage";
 import ModalAuth from "./components/ModalAuth";
 import { authApi } from "./api";
+import AdminPage from "./components/AdminPage";
 
 const ProtectedRoute = ({ isLoggedIn, onRequireAuth, children }) => {
   useEffect(() => {
@@ -131,6 +132,8 @@ const App = () => {
               cartItems={cartItems}
               userName={user?.nama || ""}
               openModal={openModal}
+              userRole={user?.role || ""}
+              authToken={authToken}
             />
           }
         />
@@ -165,10 +168,29 @@ const App = () => {
               cartItems={cartItems}
               userName={user?.nama || ""}
               openModal={openModal}
+              userRole={user?.role || ""}
             />
             </ProtectedRoute>
           }
         />
+
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute isLoggedIn={isLoggedIn} onRequireAuth={requireLogin}>
+              {user?.role === "admin" ? (
+                <AdminPage
+                  userName={user?.nama || ""}
+                  onLogout={handleLogout}
+                  authToken={authToken}
+                />
+              ) : (
+                <Navigate to="/" replace />
+              )}
+            </ProtectedRoute>
+          }
+        />
+
       </Routes>
 
       {isModalOpen && (
@@ -181,6 +203,8 @@ const App = () => {
         />
       )}
     </Router>
+
+    
   );
 };
 

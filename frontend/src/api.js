@@ -44,12 +44,13 @@ export const orderApi = {
   list: (token) => request("/orders", { token }),
 };
 
-export { API_BASE_URL };
-
 export const layananApi = {
-  list: (token) => request("/layanan", { token }), // GET /api/layanan
+  list: (token) => request("/masters/layanan", { method: "GET", token }), // GET /api/layanan
 };
 
 export const produkApi = {
-  list: (token) => request("/produk", { token }),  // GET /api/produk
+  list: (token) => request("/masters/produk", { method: "GET", token }),  // GET /api/produk
 };
+
+export { API_BASE_URL };
+

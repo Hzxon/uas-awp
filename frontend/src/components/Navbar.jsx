@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import MiniCartPreview from './MiniCartPreview'; 
 
-const Navbar = ({ cartCount, cartItems = [], isLoggedIn, onLogout, onScroll, activeSection, userName, openModal, onNavigating }) => {
+const Navbar = ({ cartCount, cartItems = [], isLoggedIn, onLogout, onScroll, activeSection, userName, openModal, onNavigating, userRole }) => {
     
     // State untuk mengontrol tampilan Mini Cart
     const [isCartHovered, setIsCartHovered] = useState(false);
 
+      const isAdmin = userRole === "admin";  
+      
     // Fungsi handler untuk navigasi internal (smooth scroll)
     const handleNavClick = (id) => {
         if (onNavigating) { 
@@ -60,47 +62,69 @@ const Navbar = ({ cartCount, cartItems = [], isLoggedIn, onLogout, onScroll, act
 
                     {/* Cart dan User Action (Conditional Rendering) */}
                     <div className="flex items-center space-x-4">
-                        
-                        {/* CONTAINER HOVER STABIL (dengan py-4) */}
-                        <div 
+
+                        {/* 🔹 Jika ADMIN → ganti keranjang jadi tombol Edit Produk/Layanan */}
+                        {isLoggedIn && isAdmin ? (
+                            <Link
+                            to="/admin"
+                            className="bg-purple-500 text-white text-sm py-2 px-4 rounded-lg hover:bg-purple-600 transition duration-150 font-medium"
+                            >
+                            Edit Produk/Layanan
+                            </Link>
+                        ) : (
+                            // 🔹 Kalau BUKAN admin → tampilkan keranjang + mini cart seperti biasa
+                            <div 
                             className="relative inline-block py-4 group" 
                             onMouseEnter={() => setIsCartHovered(true)}
                             onMouseLeave={() => setIsCartHovered(false)}
-                        >
-                            {/* Ikon Keranjang (Link) */}
+                            >
                             <Link to="/cart" className="text-gray-500 hover:text-blue-600 relative p-2 transition duration-150">
                                 {CartIconContent}
                             </Link>
 
-                            {/* RENDER MINI CART PREVIEW */}
                             {isCartHovered && (
                                 <MiniCartPreview 
-                                    cartCount={cartCount} 
-                                    items={cartItems}
-                                    isLoggedIn={isLoggedIn}
-                                    openLoginModal={openModal}
+                                cartCount={cartCount} 
+                                items={cartItems}
+                                isLoggedIn={isLoggedIn}
+                                openLoginModal={openModal}
                                 />
                             )}
-                        </div>
+                            </div>
+                        )}
 
                         {/* Tombol Login/Keluar */}
                         {isLoggedIn ? (
-                           <div className="flex items-center space-x-2">
-                                <span className="hidden sm:inline text-sm font-semibold text-gray-700">
-                                    Halo, {userName ? userName.split(' ')[0] : 'User'}! 
+                            <div className="flex items-center space-x-2">
+                            <span className="hidden sm:inline text-sm font-semibold text-gray-700">
+                                Halo, {userName ? userName.split(' ')[0] : 'User'}!
+                                {isAdmin && (
+                                <span className="ml-1 text-xs px-2 py-0.5 bg-yellow-100 text-yellow-800 rounded-full">
+                                    Admin
                                 </span>
-                                
-                                <Link to="/profile" className="text-gray-500 hover:text-blue-600 p-2 transition duration-150">
-                                    <i className="fas fa-user-circle text-2xl"></i>
-                                </Link>
-                                <button onClick={onLogout} className="ml-2 text-sm bg-red-500 text-white py-1 px-3 rounded-lg hover:bg-red-600 transition duration-150 font-medium">Keluar</button>
+                                )}
+                            </span>
+                            
+                            <Link to="/profile" className="text-gray-500 hover:text-blue-600 p-2 transition duration-150">
+                                <i className="fas fa-user-circle text-2xl"></i>
+                            </Link>
+                            <button
+                                onClick={onLogout}
+                                className="ml-2 text-sm bg-red-500 text-white py-1 px-3 rounded-lg hover:bg-red-600 transition duration-150 font-medium"
+                            >
+                                Keluar
+                            </button>
                             </div>
                         ) : (
-                            <button onClick={() => openModal('login')} className="ml-4 text-sm bg-blue-600 text-white py-1 px-3 rounded-lg hover:bg-blue-700 transition duration-150 font-medium">
-                                Login
+                            <button
+                            onClick={() => openModal('login')}
+                            className="ml-4 text-sm bg-blue-600 text-white py-1 px-3 rounded-lg hover:bg-blue-700 transition duration-150 font-medium"
+                            >
+                            Login
                             </button>
                         )}
                     </div>
+
                 </div>
             </nav>
         </header>

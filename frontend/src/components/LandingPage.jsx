@@ -24,9 +24,9 @@ const HeroSection = () => (
 );
 
 const LandingPage = ({ 
-    isLoggedIn, onLogout, onAddToCart, cartCount, cartItems, userName, openModal,
+    isLoggedIn, onLogout, onAddToCart, cartCount, cartItems, userName, openModal, userRole, authToken
 }) => {
-    const [activeSection, setActiveSection] = useState('beranda');
+    const [activeSection, setActiveSection] = useState('beranda'); 
 
     const [services, setServices] = useState([]);
     const [products, setProducts] = useState([]);
@@ -43,7 +43,7 @@ const LandingPage = ({
       useEffect(() => {
         const fetchData = async () => {
         try {
-            const layananRes = await layananApi.list();    // kalau butuh token: layananApi.list(token)
+            const layananRes = await layananApi.list(authToken);    // kalau butuh token: layananApi.list(token)
             console.log("✅ Res layanan:", layananRes);
             setServices(Array.isArray(layananRes) ? layananRes : []);
         } catch (err) {
@@ -52,7 +52,7 @@ const LandingPage = ({
         }
 
         try {
-            const produkRes = await produkApi.list();      // kalau butuh token: produkApi.list(token)
+            const produkRes = await produkApi.list(authToken);      // kalau butuh token: produkApi.list(token)
             console.log("✅ Res produk:", produkRes);
             setProducts(Array.isArray(produkRes) ? produkRes : []);
         } catch (err) {
@@ -151,6 +151,7 @@ const LandingPage = ({
                 activeSection={activeSection} // <--- STATE ACTIVE SECTION YANG DIPERBAIKI
                 userName={userName}
                 openModal={openModal}
+                userRole={userRole}
             />
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
