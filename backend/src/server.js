@@ -9,22 +9,19 @@ const itemRoutes = require("./routes/itemRoutes");
 const { verifyToken } = require("./middleware/auth");
 const pool = require("./config/db");
 
-// 🔥 PENTING: Tetap gunakan Port 5001 karena 5000 bermasalah di Mac
 const PORT = process.env.PORT || 5001;
 const app = express();
 
-// --- CONFIG CORS FINAL (YANG TERBUKTI BERHASIL) ---
 app.use(cors({
-  origin: ["http://localhost:5173", "http://127.0.0.1:5173"], // Whitelist frontend
-  credentials: true, // Wajib agar cookie/session jalan
+  origin: ["http://localhost:5173", "http://localhost:4173"],
+  credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
 app.use(express.json());
 
-// --- ROUTES ASLI DIHIDUPKAN KEMBALI ---
-app.use("/api/auth", authRoutes); // Di sini route /me dan /login yang asli berada
+app.use("/api/auth", authRoutes);
 app.use("/api/orders", verifyToken, orderRoutes);
 app.use("/api/items", itemRoutes);
 
@@ -45,18 +42,17 @@ app.use((err, req, res, next) => {
 });
 
 const startServer = async () => {
-    try {
-        const connection = await pool.getConnection(); 
-        await connection.ping(); 
-        connection.release(); 
-        app.listen(PORT, () => {
-            console.log(`✅ Server REAL running on http://localhost:${PORT}`); 
-            console.log("✅ Database connected successfully");
-        });
-    } catch (err) {
-        console.error("❌ Database Connection Failed: ", err);
-        // Jangan exit process agar server tetap nyala untuk debugging jika DB error
-    }
+  try {
+    const connection = await pool.getConnection();
+    await connection.ping();
+    connection.release();
+    app.listen(PORT, () => {
+      console.log(`Server REAL running on http://localhost:${PORT}`);
+      console.log("Database connected successfully");
+    });
+  } catch (err) {
+    console.error("Database Connection Failed: ", err);
+  }
 };
 
 startServer();

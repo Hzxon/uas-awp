@@ -91,7 +91,7 @@ exports.signup = async (req, res) => {
 };
 
 exports.login = async (req, res) => {
-  console.log("🔥 REQUEST LOGIN MASUK!"); // <--- Tambahkan ini
+  console.log("REQUEST LOGIN MASUK!"); // <--- Tambahkan ini
   console.log("Body:", req.body);
   try {
     const email = req.body.email?.toLowerCase().trim();

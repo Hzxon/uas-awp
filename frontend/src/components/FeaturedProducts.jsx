@@ -1,34 +1,42 @@
 import React from 'react';
 const products = [
     { 
-        id: "prod-det", 
-        name: "Deterjen Konsentrat (1L)", 
-        price: 45000, 
-        displayPrice: "Rp 45.000",
+        id: 1, 
+        name: "Pewangi Extra Premium", 
+        price: 3000, 
+        displayPrice: "Rp 3.000",
         type: 'Produk',
         unit: 'pcs'
     },
     { 
-        id: "prod-soft", 
-        name: "Pelembut Pakaian Premium", 
-        price: 32000, 
-        displayPrice: "Rp 32.000",
+        id: 2, 
+        name: "Pelastik Press Tambahan", 
+        price: 2000, 
+        displayPrice: "Rp 2.000",
         type: 'Produk',
         unit: 'pcs'
     },
     { 
-        id: "prod-stain", 
-        name: "Penghilang Noda Super", 
-        price: 28000, 
-        displayPrice: "Rp 28.000",
+        id: 3, 
+        name: "Hanger Tambahan", 
+        price: 2000, 
+        displayPrice: "Rp 2.000",
         type: 'Produk',
         unit: 'pcs'
     },
     { 
-        id: "prod-brush", 
-        name: "Sikat Pakaian Premium", 
-        price: 18000, 
-        displayPrice: "Rp 18.000",
+        id: 4, 
+        name: "Laundry Net (Jaring Cucian)",
+        price: 10000, 
+        displayPrice: "Rp 10.000",
+        type: 'Produk',
+        unit: 'pcs'
+    },
+    { 
+        id: 5, 
+        name: "Stain Remover Treatment (per item)",
+        price: 7000, 
+        displayPrice: "Rp 7.000",
         type: 'Produk',
         unit: 'pcs'
     },

@@ -58,12 +58,12 @@ exports.createOrder = async (req, res) => {
       await connection.beginTransaction();
 
       // 1. INSERT ke tabel ORDERS
-      // PERBAIKAN: Disesuaikan dengan screenshot tabel (hanya user_id, tanggal, total, status)
-      // Hapus: subtotal, tax_amount, delivery_fee karena kolomnya TIDAK ADA di tabel orders kamu
       const [orderResult] = await connection.query(
         "INSERT INTO orders (user_id, subtotal, tax_amount, delivery_fee, total_pembayaran, tanggal, status) VALUES (?, ?, ?, ?, ?, ?, ?)",
         [userId, subtotal, taxAmount, deliveryFee, total_pembayaran, tanggal, "pending"]
       );
+
+      console.log("ORDER RESULTS: ", orderResult);
 
       const orderId = orderResult.insertId;
 
