@@ -28,7 +28,7 @@ app.use(express.json());
 app.use("/api/auth", authRoutes); // Di sini route /me dan /login yang asli berada
 app.use("/api/orders", verifyToken, orderRoutes);
 app.use("/api/items", itemRoutes);
-app.use("/api/masters", verifyToken, masterRoutes);
+app.use("/api/masters", masterRoutes);
 //app.use("/api", masterRoutes);
 
 // Health Check
