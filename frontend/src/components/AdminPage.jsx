@@ -32,13 +32,13 @@ const AdminPage = ({ userName, onLogout, authToken }) => {
         harga: Number(newLayanan.harga),
       };
 
-      await fetch(`${API_BASE_URL}/layanan`, {
+      await fetch(layananApi.create, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${authToken}`,
         },
-        body: JSON.stringify(body),
+        body: JSON.strigify(body),
       });
 
       setNewLayanan({ nama: "", deskripsi: "", harga: "" });

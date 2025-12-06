@@ -7,7 +7,7 @@ console.log("2. API_BASE_URL yang dipakai:", API_BASE_URL);
 console.log("--- DEBUG END ---");
 
 const request = async (path, { method = "GET", token, body } = {}) => {
-   // Tambahkan log ini juga di dalam request
+  // Tambahkan log ini juga di dalam request
   console.log(`3. Requesting ke URL: ${API_BASE_URL}${path}`);
   const headers = { "Content-Type": "application/json" };
   if (token) {
@@ -44,12 +44,15 @@ export const orderApi = {
   list: (token) => request("/orders", { token }),
 };
 
+// panggil layananApi.create(token, data) untuk buat data baru ke database. oper dulu ke backend, biar backend yang handle controllersnya
 export const layananApi = {
-  list: (token) => request("/masters/layanan", { method: "GET", token }), // GET /api/layanan
+  list: () => request("/masters/layanan", { method: "GET" }),
+  create: (token, data) => request("/masters/layanan", { method: "POST", token, body: data }),
+
 };
 
 export const produkApi = {
-  list: (token) => request("/masters/produk", { method: "GET", token }),  // GET /api/produk
+  list: () => request("/masters/produk", { method: "GET" }),
 };
 
 export { API_BASE_URL };

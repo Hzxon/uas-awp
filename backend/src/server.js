@@ -24,12 +24,11 @@ app.use(cors({
 
 app.use(express.json());
 
-// --- ROUTES ASLI DIHIDUPKAN KEMBALI ---
+// Main Routes
 app.use("/api/auth", authRoutes); // Di sini route /me dan /login yang asli berada
 app.use("/api/orders", verifyToken, orderRoutes);
 app.use("/api/items", itemRoutes);
 app.use("/api/masters", masterRoutes);
-//app.use("/api", masterRoutes);
 
 // Health Check
 app.get("/api/health", (req, res) => {
