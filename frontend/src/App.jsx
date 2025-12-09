@@ -5,6 +5,11 @@ import CartPage from "./components/CartPage";
 import ModalAuth from "./components/ModalAuth";
 import { authApi } from "./api";
 import AdminPage from "./components/AdminPage";
+import AdminOrdersPage from "./components/AdminOrdersPage";
+import PaymentSuccess from "./components/PaymentSuccess";
+import CheckoutPaymentPage from "./components/CheckoutPaymentPage";
+import NotFound from "./components/NotFound";
+import OrderStatusPage from "./components/OrderStatusPage";
 
 const ProtectedRoute = ({ isLoggedIn, onRequireAuth, children }) => {
   useEffect(() => {
@@ -25,6 +30,15 @@ const App = () => {
   const [cartItems, setCartItems] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalType, setModalType] = useState("login");
+  const [selectedOutlet, setSelectedOutlet] = useState(() => {
+    const saved = localStorage.getItem("selectedOutlet");
+    return saved ? JSON.parse(saved) : null;
+  });
+  const [selectedAddressId, setSelectedAddressId] = useState(() => {
+    const saved = localStorage.getItem("selectedAddressId");
+    return saved ? Number(saved) : null;
+  });
+  const [pickupSlot, setPickupSlot] = useState(() => localStorage.getItem("pickupSlot") || "08:00 - 10:00");
   const isLoggedIn = Boolean(user);
 
   useEffect(() => {
@@ -71,6 +85,7 @@ const App = () => {
     setUser(null);
     setAuthToken("");
     setCartItems([]);
+    setSelectedAddressId(null);
     localStorage.removeItem("authToken");
     alert("Anda telah keluar.");
   };
@@ -133,13 +148,63 @@ const App = () => {
               userName={user?.nama || ""}
               openModal={openModal}
               userRole={user?.role || ""}
-              authToken={authToken}
+              selectedOutlet={selectedOutlet}
+              setSelectedOutlet={(outlet) => {
+                setSelectedOutlet(outlet);
+                localStorage.setItem("selectedOutlet", JSON.stringify(outlet));
+              }}
             />
           }
         />
 
         <Route
-          path="/cart"
+          path="/profile"
+          element={
+            <ProtectedRoute isLoggedIn={isLoggedIn} onRequireAuth={requireLogin}>
+              <LandingPage
+                isLoggedIn={isLoggedIn}
+                onLogout={handleLogout}
+                onAddToCart={handleAddToCart}
+                cartCount={cartCount}
+                cartItems={cartItems}
+                userName={user?.nama || ""}
+                openModal={openModal}
+                userRole={user?.role || ""}
+              />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/payment/success"
+          element={
+            <ProtectedRoute isLoggedIn={isLoggedIn} onRequireAuth={requireLogin}>
+              <PaymentSuccess authToken={authToken} />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/checkout/payment"
+          element={
+            <ProtectedRoute isLoggedIn={isLoggedIn} onRequireAuth={requireLogin}>
+              <CheckoutPaymentPage
+                authToken={authToken}
+                cartItems={cartItems}
+                selectedOutlet={selectedOutlet}
+                selectedAddressId={selectedAddressId}
+                pickupSlot={pickupSlot}
+                onOrderPlaced={handleOrderPlaced}
+                userName={user?.nama || ""}
+                onLogout={handleLogout}
+                cartCount={cartCount}
+              />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/checkout/address"
           element={
             <ProtectedRoute isLoggedIn={isLoggedIn} onRequireAuth={requireLogin}>
               <CartPage
@@ -151,25 +216,64 @@ const App = () => {
                 onUpdateQuantity={handleUpdateQuantity}
                 authToken={authToken}
                 onOrderPlaced={handleOrderPlaced}
+                selectedOutlet={selectedOutlet}
+                setSelectedOutlet={(outlet) => {
+                  setSelectedOutlet(outlet);
+                  localStorage.setItem("selectedOutlet", JSON.stringify(outlet));
+                }}
+                selectedAddressId={selectedAddressId}
+                setSelectedAddressId={(id) => {
+                  setSelectedAddressId(id);
+                  localStorage.setItem("selectedAddressId", id ?? "");
+                }}
+                pickupSlot={pickupSlot}
+                setPickupSlot={(slot) => {
+                  setPickupSlot(slot);
+                  localStorage.setItem("pickupSlot", slot);
+                }}
+                showItemsPanel={false}
+                showAddressPanel
+                showPaymentCTA={false}
+                showSummaryTotals={false}
+                nextPath="/checkout/services"
               />
             </ProtectedRoute>
           }
         />
 
         <Route
-          path="/profile"
+          path="/checkout/services"
           element={
             <ProtectedRoute isLoggedIn={isLoggedIn} onRequireAuth={requireLogin}>
-              <LandingPage
-              isLoggedIn={isLoggedIn}
-              onLogout={handleLogout}
-              onAddToCart={handleAddToCart}
-              cartCount={cartCount}
-              cartItems={cartItems}
-              userName={user?.nama || ""}
-              openModal={openModal}
-              userRole={user?.role || ""}
-            />
+              <CartPage
+                isLoggedIn={isLoggedIn}
+                userName={user?.nama || ""}
+                onLogout={handleLogout}
+                cartCount={cartCount}
+                cartItems={cartItems}
+                onUpdateQuantity={handleUpdateQuantity}
+                authToken={authToken}
+                onOrderPlaced={handleOrderPlaced}
+                selectedOutlet={selectedOutlet}
+                setSelectedOutlet={(outlet) => {
+                  setSelectedOutlet(outlet);
+                  localStorage.setItem("selectedOutlet", JSON.stringify(outlet));
+                }}
+                selectedAddressId={selectedAddressId}
+                setSelectedAddressId={(id) => {
+                  setSelectedAddressId(id);
+                  localStorage.setItem("selectedAddressId", id ?? "");
+                }}
+                pickupSlot={pickupSlot}
+                setPickupSlot={(slot) => {
+                  setPickupSlot(slot);
+                  localStorage.setItem("pickupSlot", slot);
+                }}
+                showItemsPanel
+                showAddressPanel={false}
+                showPaymentCTA
+                nextPath="/checkout/payment"
+              />
             </ProtectedRoute>
           }
         />
@@ -191,6 +295,30 @@ const App = () => {
           }
         />
 
+        <Route
+          path="/admin/orders"
+          element={
+            <ProtectedRoute isLoggedIn={isLoggedIn} onRequireAuth={requireLogin}>
+              {user?.role === "admin" ? (
+                <AdminOrdersPage authToken={authToken} userName={user?.nama || ""} />
+              ) : (
+                <Navigate to="/" replace />
+              )}
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/orders/status"
+          element={
+            <ProtectedRoute isLoggedIn={isLoggedIn} onRequireAuth={requireLogin}>
+              <OrderStatusPage authToken={authToken} />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route path="*" element={<NotFound />} />
+
       </Routes>
 
       {isModalOpen && (
@@ -204,7 +332,7 @@ const App = () => {
       )}
     </Router>
 
-    
+
   );
 };
 

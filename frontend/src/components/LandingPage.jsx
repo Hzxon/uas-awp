@@ -1,30 +1,119 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Navbar from './Navbar';
-import FeaturedProducts from './FeaturedProducts';
-import FeaturedServices from './FeaturedServices';
 import Footer from './Footer';
 import { layananApi, produkApi } from '../api';
+import OutletSelector from './OutletSelector';
 
-const HeroSection = () => (
-  <section id="beranda" className="mb-16">
-    {/* Konten Hero Section tetap sama */}
-    <div className="bg-blue-600 rounded-2xl p-8 lg:p-16 text-white shadow-xl flex flex-col lg:flex-row items-center justify-between">
-      <div>
-        <h1 className="text-4xl lg:text-5xl font-extrabold mb-4">Cucian Bersih Maksimal, Tanpa Repot! 🧺</h1>
-        <p className="text-lg mb-6">Nikmati Diskon 20% untuk pelanggan baru. Layanan Antar-Jemput Gratis!</p>
-        <a href="#layanan-lengkap" className="inline-block bg-green-400 text-blue-900 font-bold py-3 px-8 rounded-full hover:bg-green-300 transition duration-300 transform hover:scale-105">
-          Pesan Sekarang
-        </a>
+const heroFilters = [
+  { label: "Lokasi penjemputan", placeholder: "Masukkan alamat", icon: "fa-location-dot" },
+  { label: "Jadwal", placeholder: "Pilih tanggal", icon: "fa-calendar-days" },
+  { label: "Jenis layanan", placeholder: "Cuci + setrika / Dry clean", icon: "fa-shirt" },
+  { label: "Jumlah", placeholder: "Perkiraan kg", icon: "fa-scale-balanced" },
+];
+
+const perks = [
+  { icon: "fa-truck-fast", title: "Antar jemput cepat", desc: "Kurir menjemput dalam 60 menit" },
+  { icon: "fa-spray-can-sparkles", title: "Higienis & wangi", desc: "Standar hotel, deterjen premium" },
+  { icon: "fa-clock", title: "Same day available", desc: "Selesai di hari yang sama untuk urgent" },
+];
+
+const HeroSection = ({ onScroll }) => (
+  <section id="beranda" className="pt-6 pb-12">
+    <div className="bg-white border border-slate-100 shadow-sm rounded-3xl p-6 md:p-10 relative overflow-hidden">
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute -top-24 -right-10 h-60 w-60 bg-blue-100 rounded-full blur-3xl opacity-40" />
+        <div className="absolute -bottom-28 -left-10 h-60 w-60 bg-green-100 rounded-full blur-3xl opacity-50" />
       </div>
-      <div className="mt-8 lg:mt-0 lg:w-1/3">
-        {/* ... (Konten visual/image placeholder) ... */}
+      <div className="grid md:grid-cols-2 gap-10 items-center relative">
+        <div className="space-y-5">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold">
+            <i className="fas fa-star text-amber-500" /> Laundry on-demand
+          </div>
+          <h1 className="text-4xl md:text-5xl font-bold text-slate-900 leading-tight">
+            Laundry bersih, noda hilang, cepat beres.
+          </h1>
+          <p className="text-lg text-slate-600">
+            Pilih layanan, atur jadwal jemput, dan nikmati pakaian rapi tanpa repot. Harga transparan, kurir terlatih, hasil wangi konsisten.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={() => onScroll('layanan-lengkap')}
+              className="px-5 py-3 rounded-full bg-slate-900 text-white font-semibold shadow-sm hover:bg-blue-700 transition"
+            >
+              Jadwalkan penjemputan
+            </button>
+            <button
+              onClick={() => onScroll('produk-lengkap')}
+              className="px-5 py-3 rounded-full bg-white border border-slate-200 text-slate-800 font-semibold hover:border-blue-300 transition"
+            >
+              Lihat kebutuhan laundry
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-4 text-sm text-slate-600">
+            <div className="flex items-center gap-2"><i className="fas fa-shield-halved text-green-500"></i> Garansi ulang gratis</div>
+            <div className="flex items-center gap-2"><i className="fas fa-wallet text-blue-500"></i> Bayar aman & transparan</div>
+            <div className="flex items-center gap-2"><i className="fas fa-heart text-rose-500"></i> 4.9/5 dari pelanggan</div>
+          </div>
+        </div>
+
+        <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5 shadow-inner space-y-3">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <p className="text-sm text-slate-500">Lanjutkan pencarian</p>
+              <p className="font-semibold text-slate-900">Laundry rumahan • Kurir siap</p>
+            </div>
+            <div className="h-10 w-10 rounded-full bg-white border border-slate-100 shadow flex items-center justify-center">
+              <i className="fas fa-route text-blue-500"></i>
+            </div>
+          </div>
+
+          <div className="divide-y divide-slate-100">
+            {heroFilters.map((field) => (
+              <div key={field.label} className="py-3 flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-white border border-slate-100 flex items-center justify-center text-slate-500">
+                  <i className={`fas ${field.icon}`} />
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs uppercase tracking-wide text-slate-500">{field.label}</p>
+                  <p className="text-sm font-semibold text-slate-900">{field.placeholder}</p>
+                </div>
+                <i className="fas fa-chevron-right text-slate-300"></i>
+              </div>
+            ))}
+          </div>
+
+          <button
+            onClick={() => onScroll('layanan-lengkap')}
+            className="w-full mt-1 bg-rose-500 hover:bg-rose-600 text-white font-semibold py-3 rounded-full shadow-sm transition"
+          >
+            Mulai laundry
+          </button>
+        </div>
       </div>
     </div>
   </section>
 );
 
+const ValueProps = () => (
+  <section className="py-6">
+    <div className="grid md:grid-cols-3 gap-4">
+      {perks.map((perk) => (
+        <div key={perk.title} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 flex gap-3 items-start">
+          <div className="h-12 w-12 rounded-xl bg-slate-900 text-white flex items-center justify-center text-lg shadow-sm">
+            <i className={`fas ${perk.icon}`}></i>
+          </div>
+          <div>
+            <h3 className="text-base font-semibold text-slate-900">{perk.title}</h3>
+            <p className="text-sm text-slate-600">{perk.desc}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+);
+
 const LandingPage = ({
-  isLoggedIn, onLogout, onAddToCart, cartCount, cartItems, userName, openModal, userRole
+  isLoggedIn, onLogout, onAddToCart, cartCount, cartItems, userName, openModal, userRole, selectedOutlet, setSelectedOutlet
 }) => {
   const [activeSection, setActiveSection] = useState('beranda');
 
@@ -43,8 +132,7 @@ const LandingPage = ({
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const layananRes = await layananApi.list();    // kalau butuh token: layananApi.list(token)
-        console.log("✅ Res layanan:", layananRes);
+        const layananRes = await layananApi.list();
         setServices(Array.isArray(layananRes) ? layananRes : []);
       } catch (err) {
         console.error("❌ Gagal mengambil layanan:", err);
@@ -52,8 +140,7 @@ const LandingPage = ({
       }
 
       try {
-        const produkRes = await produkApi.list();      // kalau butuh token: produkApi.list(token)
-        console.log("✅ Res produk:", produkRes);
+        const produkRes = await produkApi.list();
         setProducts(Array.isArray(produkRes) ? produkRes : []);
       } catch (err) {
         console.error("❌ Gagal mengambil produk:", err);
@@ -64,15 +151,11 @@ const LandingPage = ({
     fetchData();
   }, []);
 
-
-
-  // LOGIKA PERBAIKAN 1: Logika IntersectionObserver (tetap sama)
   useEffect(() => {
     const sections = ['beranda', 'layanan-lengkap', 'produk-lengkap'];
 
     const observerOptions = {
       root: null,
-      // Mengatur rootMargin agar observer mendeteksi section yang sedang dilihat
       rootMargin: '0px 0px -50% 0px',
       threshold: 0.1,
     };
@@ -97,170 +180,193 @@ const LandingPage = ({
     return () => observer.disconnect();
   }, []);
 
-  const getServiceEmoji = (name) => {
+const getServiceEmoji = (name) => {
     if (!name) return "🧺";
-
     const lower = name.toLowerCase();
-
-    // 1. Cuci Kering (per Kg)
     if (lower.includes("cuci kering")) return "🧺";
-
-    // 2. Cuci + Setrika (per Kg)
     if (lower.includes("cuci + setrika") || (lower.includes("cuci") && lower.includes("setrika"))) {
       return "👕";
     }
-
-    // 3. Setrika Saja (per Kg)
     if (lower.includes("setrika saja")) return "🧼";
-
-    // 4. Dry Cleaning (per item)
     if (lower.includes("dry cleaning")) return "💧";
-
-    // 5. Cuci Selimut / Bedcover (per item)
     if (lower.includes("selimut") || lower.includes("bedcover")) return "🛏️";
-
-    // Default kalau tidak match apa pun
     return "🧽";
   };
 
   const getProductEmoji = (name) => {
     if (!name) return "📦";
-
     const lower = name.toLowerCase();
-
-    if (lower.includes("pewangi")) return "🌸";                 // Pewangi Extra Premium
-    if (lower.includes("plastik")) return "🛍️";               // Plastik Press Tambahan
-    if (lower.includes("hanger")) return "🧥";                 // Hanger Tambahan
-    if (lower.includes("laundry net") || lower.includes("jaring"))
-      return "🧺";                                            // Laundry Net
-    if (lower.includes("stain") || lower.includes("noda"))
-      return "✨";                                            // Stain Remover Treatment
-
-    return "📦"; // default kalau tidak cocok
+    if (lower.includes("pewangi")) return "🌸";
+    if (lower.includes("plastik")) return "🛍️";
+    if (lower.includes("hanger")) return "🧥";
+    if (lower.includes("laundry net") || lower.includes("jaring")) return "🧺";
+    if (lower.includes("stain") || lower.includes("noda")) return "✨";
+    return "📦";
   };
 
+  const topServices = useMemo(() => services.slice(0, 8), [services]);
+  const topProducts = useMemo(() => products.slice(0, 8), [products]);
+
+  const renderServiceCard = (svc) => (
+    <div
+      key={svc.id}
+      className="min-w-[240px] max-w-[320px] bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition hover:-translate-y-1 overflow-hidden flex flex-col"
+    >
+      {svc.image && (
+        <div className="h-36 w-full bg-slate-100">
+          <img src={svc.image} alt={svc.nama} className="h-full w-full object-cover" />
+        </div>
+      )}
+      <div className="p-4 space-y-3 flex-1 flex flex-col">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">{getServiceEmoji(svc.nama)}</span>
+            <h3 className="font-semibold text-slate-900">{svc.nama}</h3>
+          </div>
+          <button className="text-slate-300 hover:text-rose-400 transition">
+            <i className="far fa-heart"></i>
+          </button>
+        </div>
+        <p className="text-sm text-slate-600">
+          {svc.deskripsi || "Layanan laundry profesional untuk kebutuhan harian Anda."}
+        </p>
+        <div className="mt-auto flex items-center justify-between pt-2">
+          <div>
+            <p className="text-2xl font-bold text-slate-900">Rp {svc.harga.toLocaleString('id-ID')}</p>
+            <p className="text-xs text-slate-500">per kg</p>
+          </div>
+          <button
+            className="px-4 py-2 rounded-full bg-slate-900 text-white text-sm font-semibold hover:bg-blue-700 transition shadow-sm"
+            onClick={() =>
+              onAddToCart({
+                id: svc.id,
+                name: svc.nama,
+                price: svc.harga,
+                type: 'Layanan',
+                unit: 'kg',
+              })
+            }
+          >
+            Pilih
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+const renderProductCard = (prod) => (
+    <div
+      key={prod.id}
+      className="min-w-[240px] max-w-[320px] bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition hover:-translate-y-1 overflow-hidden flex flex-col"
+    >
+      {prod.image && (
+        <div className="h-36 w-full bg-slate-100">
+          <img src={prod.image} alt={prod.nama} className="h-full w-full object-cover" />
+        </div>
+      )}
+      <div className="p-4 space-y-3 flex-1 flex flex-col">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-xl">{getProductEmoji(prod.nama)}</span>
+            <h3 className="font-semibold text-slate-900">{prod.nama}</h3>
+          </div>
+          <button className="text-slate-300 hover:text-rose-400 transition">
+            <i className="far fa-heart"></i>
+          </button>
+        </div>
+        <p className="text-sm text-slate-600">
+          {prod.deskripsi || "Pelengkap wangi & proteksi pakaian Anda."}
+        </p>
+        <div className="mt-auto flex items-center justify-between pt-2">
+          <div>
+            <p className="text-2xl font-bold text-slate-900">Rp {prod.harga.toLocaleString('id-ID')}</p>
+            <p className="text-xs text-slate-500">per pcs</p>
+          </div>
+          <button
+            className="px-4 py-2 rounded-full bg-slate-900 text-white text-sm font-semibold hover:bg-blue-700 transition shadow-sm"
+            onClick={() =>
+              onAddToCart({
+                id: prod.id,
+                name: prod.nama,
+                price: prod.harga,
+                type: 'Produk',
+                unit: 'pcs',
+              })
+            }
+          >
+            Tambah
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="bg-blue-50 min-h-screen">
+    <div className="bg-transparent min-h-screen">
       <Navbar
         cartCount={cartCount}
         cartItems={cartItems}
         isLoggedIn={isLoggedIn}
         onLogout={onLogout}
-        onScroll={scrollToSection} // <--- PROPS SMOOTH SCROLL DITERUSKAN DENGAN BENAR
-        activeSection={activeSection} // <--- STATE ACTIVE SECTION YANG DIPERBAIKI
+        onScroll={scrollToSection}
+        activeSection={activeSection}
         userName={userName}
         openModal={openModal}
         userRole={userRole}
       />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <HeroSection />
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <HeroSection onScroll={scrollToSection} />
+        <OutletSelector selectedOutlet={selectedOutlet} onSelect={setSelectedOutlet} />
+        <ValueProps />
 
-        <FeaturedServices onAddToCart={onAddToCart} />
-
-        {/* 1. Layanan Lengkap (Target Scroll) */}
-        <section id="layanan-lengkap" className="pt-16 mb-16">
-          <h2 className="text-3xl font-bold text-gray-800 mb-8">🧺 Semua Layanan Kami</h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {services.length === 0 ? (
-              <p className="text-gray-500">Memuat data layanan...</p>
-            ) : (
-              services.map((svc) => (
-                <div
-                  key={svc.id}
-                  className="bg-white p-6 rounded-xl shadow-md border-t-4 border-blue-500"
-                >
-                  <h3 className="text-xl font-bold mb-2">
-                    {getServiceEmoji(svc.nama)} {svc.nama}
-                  </h3>
-
-                  <p className="text-gray-600">
-                    {svc.deskripsi || "Layanan laundry profesional untuk kebutuhan harian Anda."}
-                  </p>
-
-                  <p className="text-2xl font-bold text-green-600 mt-3">
-                    Rp {svc.harga.toLocaleString('id-ID')}/kg
-                  </p>
-
-                  <button
-                    className="mt-4 text-blue-600 font-medium hover:text-blue-800"
-                    onClick={() =>
-                      onAddToCart({
-                        id: svc.id,
-                        name: svc.nama,
-                        price: svc.harga,
-                        type: 'Layanan',
-                        unit: 'kg',
-                      })
-                    }
-                  >
-                    + Keranjang
-                  </button>
-                </div>
-              ))
-            )}
+        {/* LAYANAN */}
+        <section id="layanan-lengkap" className="pt-12 pb-10">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="text-xs uppercase tracking-wide text-slate-500">Pilihan utama</p>
+              <h2 className="text-2xl font-bold text-slate-900">Layanan favorit pelanggan</h2>
+            </div>
+            <button
+              onClick={() => scrollToSection('layanan-lengkap')}
+              className="text-sm font-semibold text-blue-600 hover:text-blue-700"
+            >
+              Lihat semua
+            </button>
           </div>
-        </section>
-        <section id="produk-lengkap" className="pt-16 mb-16">
-          <h2 className="text-3xl font-bold text-gray-800 mb-8">
-            🧴 Semua Produk Laundry Kami
-          </h2>
 
-          {products.length === 0 ? (
-            <p className="text-gray-500">Memuat data produk...</p>
+          {topServices.length === 0 ? (
+            <p className="text-slate-500">Memuat layanan terbaik...</p>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {products.map((prod) => (
-                <div
-                  key={prod.id}
-                  className="bg-white rounded-xl shadow-md p-4 flex flex-col text-center hover:shadow-lg transition"
-                >
-
-                  {/* Icon */}
-                  <div className="h-20 w-20 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <span className="text-3xl">
-                      {getProductEmoji(prod.nama)}
-                    </span>
-                  </div>
-
-                  {/* NAMA PRODUK */}
-                  <h4 className="font-semibold text-gray-800">{prod.nama}</h4>
-
-                  {/* DESKRIPSI PRODUK */}
-                  <p className="text-xs text-gray-500 mt-1 mb-3">
-                    {prod.deskripsi || "Tidak ada deskripsi."}
-                  </p>
-
-                  {/* HARGA */}
-                  <p className="text-sm font-bold text-green-600">
-                    Rp {prod.harga.toLocaleString("id-ID")}
-                  </p>
-
-                  {/* BUTTON */}
-                  <button
-                    className="bg-green-500 text-white text-sm py-2 px-4 rounded-lg mt-3 hover:bg-green-600"
-                    onClick={() =>
-                      onAddToCart({
-                        id: prod.id,
-                        name: prod.nama,
-                        price: prod.harga,
-                        type: 'Produk',
-                        unit: 'pcs',
-                      })
-                    }
-                  >
-                    + Keranjang
-                  </button>
-
-                </div>
-              ))}
+            <div className="flex gap-4 overflow-x-auto pb-2 snap-x">
+              {topServices.map(renderServiceCard)}
             </div>
           )}
         </section>
 
+        {/* PRODUK */}
+        <section id="produk-lengkap" className="pt-6 pb-12">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="text-xs uppercase tracking-wide text-slate-500">Tambahan wangi</p>
+              <h2 className="text-2xl font-bold text-slate-900">Produk penunjang laundry</h2>
+            </div>
+            <button
+              onClick={() => scrollToSection('produk-lengkap')}
+              className="text-sm font-semibold text-blue-600 hover:text-blue-700"
+            >
+              Lihat semua
+            </button>
+          </div>
 
+          {topProducts.length === 0 ? (
+            <p className="text-slate-500">Memuat produk pilihan...</p>
+          ) : (
+            <div className="flex gap-4 overflow-x-auto pb-2 snap-x">
+              {topProducts.map(renderProductCard)}
+            </div>
+          )}
+        </section>
 
       </main>
 

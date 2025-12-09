@@ -1,20 +1,11 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5001/api";
 
-// 🔴 TAMBAHKAN 3 BARIS INI UNTUK DEBUGGING 🔴
-console.log("--- DEBUG START ---");
-console.log("1. Nilai dari .env:", import.meta.env.VITE_API_URL);
-console.log("2. API_BASE_URL yang dipakai:", API_BASE_URL);
-console.log("--- DEBUG END ---");
-
 const request = async (path, { method = "GET", token, body } = {}) => {
-  // Tambahkan log ini juga di dalam request
-  console.log(`3. Requesting ke URL: ${API_BASE_URL}${path}`);
   const headers = { "Content-Type": "application/json" };
   if (token) {
     headers.Authorization = `Bearer ${token}`;
   }
 
-  console.log("Body Subtotal: ", body);
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method,
     headers,
@@ -42,18 +33,49 @@ export const authApi = {
 export const orderApi = {
   create: (token, payload) => request("/orders", { method: "POST", token, body: payload }),
   list: (token) => request("/orders", { token }),
+  adminList: (token) => request("/orders/admin/all", { token }),
+  timeline: (token, id) => request(`/status/${id}`, { token }),
+  get: (token, id) => request(`/orders/${id}`, { token }),
 };
 
-// panggil layananApi.create(token, data) untuk buat data baru ke database. oper dulu ke backend, biar backend yang handle controllersnya
-export const layananApi = {
-  list: () => request("/masters/layanan", { method: "GET" }),
-  create: (token, data) => request("/masters/layanan", { method: "POST", token, body: data }),
+export const addressApi = {
+  list: (token) => request("/addresses", { token }),
+  create: (token, data) => request("/addresses", { method: "POST", token, body: data }),
+  update: (token, id, data) => request(`/addresses/${id}`, { method: "PUT", token, body: data }),
+  remove: (token, id) => request(`/addresses/${id}`, { method: "DELETE", token }),
+};
 
+export const paymentApi = {
+  createMock: (token, orderId) => request("/payments/mock", { method: "POST", token, body: { orderId } }),
+  confirmMock: (token, paymentToken, paymentMethod) =>
+    request("/payments/mock/confirm", { method: "POST", token, body: { paymentToken, paymentMethod } }),
+  downloadInvoice: (token, orderId) => request(`/payments/invoice/${orderId}`, { token }),
+};
+
+export const layananApi = {
+  list: (token) => request("/masters/layanan", { method: "GET", token }),
+  create: (token, data) =>
+    request("/masters/layanan", { method: "POST", token, body: data }),
+  update: (token, id, data) =>
+    request(`/masters/layanan/${id}`, { method: "PUT", token, body: data }),
+  remove: (token, id) => request(`/masters/layanan/${id}`, { method: "DELETE", token }),
 };
 
 export const produkApi = {
-  list: () => request("/masters/produk", { method: "GET" }),
+  list: (token) => request("/masters/produk", { method: "GET", token }),
+  create: (token, data) =>
+    request("/masters/produk", { method: "POST", token, body: data }),
+  update: (token, id, data) =>
+    request(`/masters/produk/${id}`, { method: "PUT", token, body: data }),
+  remove: (token, id) => request(`/masters/produk/${id}`, { method: "DELETE", token }),
+};
+
+export const outletApi = {
+  list: () => request("/outlets"),
+  adminList: (token) => request("/outlets/admin/all", { token }),
+  create: (token, data) => request("/outlets", { method: "POST", token, body: data }),
+  update: (token, id, data) => request(`/outlets/${id}`, { method: "PUT", token, body: data }),
+  remove: (token, id) => request(`/outlets/${id}`, { method: "DELETE", token }),
 };
 
 export { API_BASE_URL };
-

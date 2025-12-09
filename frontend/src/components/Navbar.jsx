@@ -23,12 +23,11 @@ const Navbar = ({ cartCount, cartItems = [], isLoggedIn, onLogout, onScroll, act
 
     // Fungsi untuk mendapatkan kelas highlight dinamis
     const getNavClass = (id) => {
-        const baseClass = "border-b-2 px-3 py-2 font-medium bg-transparent border-0 focus:outline-none transition duration-150";
-        if (id === activeSection && !onNavigating) { 
-            return `${baseClass} border-blue-500 text-blue-600`;
-        } else {
-            return `${baseClass} border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700`;
+        const baseClass = "px-4 py-2 rounded-full text-sm font-semibold transition duration-150";
+        if (id === activeSection && !onNavigating) {
+            return `${baseClass} bg-white text-slate-900 shadow-sm border border-slate-200`;
         }
+        return `${baseClass} text-slate-500 hover:text-slate-800`;
     };
     
     const CartIconContent = (
@@ -43,18 +42,24 @@ const Navbar = ({ cartCount, cartItems = [], isLoggedIn, onLogout, onScroll, act
     );
 
     return (
-        <header className="bg-white shadow-lg sticky top-0 z-50">
+        <header className="sticky top-0 z-50 bg-white/85 backdrop-blur border-b border-slate-100">
             <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between items-center h-16">
+                <div className="flex justify-between items-center h-16 gap-4">
                     {/* Logo */}
                     <div className="flex-shrink-0">
-                        <button onClick={() => handleNavClick('beranda')} className="text-2xl font-extrabold text-blue-600">
-                                Wash<span className="text-green-500">Fast</span>
+                        <button
+                            onClick={() => handleNavClick('beranda')}
+                            className="text-2xl font-extrabold text-slate-900 flex items-center gap-2"
+                        >
+                            <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-green-400 text-white shadow-sm">
+                                <i className="fas fa-water"></i>
+                            </span>
+                            <span className="text-2xl font-extrabold text-slate-900">WashFast</span>
                         </button>
                     </div>
 
                     {/* Navigasi Utama */}
-                    <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
+                    <div className="hidden sm:flex items-center bg-slate-50 border border-slate-100 rounded-full px-2 py-1 shadow-inner">
                         <button onClick={() => handleNavClick('beranda')} className={getNavClass('beranda')}>Beranda</button>
                         <button onClick={() => handleNavClick('layanan-lengkap')} className={getNavClass('layanan-lengkap')}>Layanan</button>
                         <button onClick={() => handleNavClick('produk-lengkap')} className={getNavClass('produk-lengkap')}>Produk</button>
@@ -62,65 +67,66 @@ const Navbar = ({ cartCount, cartItems = [], isLoggedIn, onLogout, onScroll, act
 
                     {/* Cart dan User Action (Conditional Rendering) */}
                     <div className="flex items-center space-x-4">
-
-                        {/* 🔹 Jika ADMIN → ganti keranjang jadi tombol Edit Produk/Layanan */}
                         {isLoggedIn && isAdmin ? (
                             <Link
-                            to="/admin"
-                            className="bg-purple-500 text-white text-sm py-2 px-4 rounded-lg hover:bg-purple-600 transition duration-150 font-medium"
+                                to="/admin"
+                                className="text-sm px-4 py-2 rounded-full border border-slate-200 text-slate-800 hover:border-blue-400 hover:text-blue-600 transition font-semibold bg-white inline-flex items-center gap-2"
                             >
-                            Edit Produk/Layanan
+                                <span>Admin Panel</span>
+                                <span className="text-[11px] px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-800 border border-yellow-200">
+                                    Admin
+                                </span>
                             </Link>
                         ) : (
-                            // 🔹 Kalau BUKAN admin → tampilkan keranjang + mini cart seperti biasa
-                            <div 
-                            className="relative inline-block py-4 group" 
-                            onMouseEnter={() => setIsCartHovered(true)}
-                            onMouseLeave={() => setIsCartHovered(false)}
+                            <div
+                                className="relative inline-block"
+                                onMouseEnter={() => setIsCartHovered(true)}
+                                onMouseLeave={() => setIsCartHovered(false)}
                             >
-                            <Link to="/cart" className="text-gray-500 hover:text-blue-600 relative p-2 transition duration-150">
-                                {CartIconContent}
-                            </Link>
+                                <Link to="/checkout/address" className="text-slate-600 hover:text-blue-600 relative p-2 rounded-full bg-white border border-slate-200 hover:border-blue-300 transition shadow-sm">
+                                    {CartIconContent}
+                                </Link>
 
-                            {isCartHovered && (
-                                <MiniCartPreview 
-                                cartCount={cartCount} 
-                                items={cartItems}
-                                isLoggedIn={isLoggedIn}
-                                openLoginModal={openModal}
-                                />
-                            )}
+                                {isCartHovered && (
+                                    <MiniCartPreview
+                                        cartCount={cartCount}
+                                        items={cartItems}
+                                        isLoggedIn={isLoggedIn}
+                                        openLoginModal={openModal}
+                                    />
+                                )}
                             </div>
                         )}
 
-                        {/* Tombol Login/Keluar */}
+                        {/* Status, Login/Keluar */}
                         {isLoggedIn ? (
                             <div className="flex items-center space-x-2">
-                            <span className="hidden sm:inline text-sm font-semibold text-gray-700">
-                                Halo, {userName ? userName.split(' ')[0] : 'User'}!
-                                {isAdmin && (
-                                <span className="ml-1 text-xs px-2 py-0.5 bg-yellow-100 text-yellow-800 rounded-full">
-                                    Admin
+                                <Link
+                                    to="/orders/status"
+                                    className="hidden sm:inline text-sm px-3 py-2 rounded-full border border-slate-200 text-slate-800 hover:border-blue-400 hover:text-blue-600 transition font-semibold bg-white"
+                                >
+                                    Status
+                                </Link>
+                                <span className="hidden sm:inline text-sm font-semibold text-gray-700">
+                                    {userName ? userName.split(' ')[0] : 'User'}
                                 </span>
-                                )}
-                            </span>
-                            
-                            <Link to="/profile" className="text-gray-500 hover:text-blue-600 p-2 transition duration-150">
-                                <i className="fas fa-user-circle text-2xl"></i>
-                            </Link>
-                            <button
-                                onClick={onLogout}
-                                className="ml-2 text-sm bg-red-500 text-white py-1 px-3 rounded-lg hover:bg-red-600 transition duration-150 font-medium"
-                            >
-                                Keluar
-                            </button>
+
+                                <Link to="/profile" className="text-gray-500 hover:text-blue-600 p-2 transition duration-150">
+                                    <i className="fas fa-user-circle text-2xl"></i>
+                                </Link>
+                                <button
+                                    onClick={onLogout}
+                                    className="text-sm bg-red-500 text-white py-1.5 px-4 rounded-full hover:bg-red-600 transition duration-150 font-semibold shadow-sm"
+                                >
+                                    Keluar
+                                </button>
                             </div>
                         ) : (
                             <button
-                            onClick={() => openModal('login')}
-                            className="ml-4 text-sm bg-blue-600 text-white py-1 px-3 rounded-lg hover:bg-blue-700 transition duration-150 font-medium"
+                                onClick={() => openModal('login')}
+                                className="text-sm bg-slate-900 text-white py-1.5 px-4 rounded-full hover:bg-blue-600 transition duration-150 font-semibold shadow-sm"
                             >
-                            Login
+                                Masuk
                             </button>
                         )}
                     </div>

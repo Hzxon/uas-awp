@@ -1,17 +1,18 @@
 const express = require("express");
 const router = express.Router();
+const { verifyToken, requireAdmin } = require("../middleware/auth");
 const { getLayanan, createLayanan, updateLayanan, deleteLayanan, getProduk, createProduk, updateProduk, deleteProduk } = require("../controllers/masterController");
 
 // LAYANAN
 router.get("/layanan", getLayanan);
-router.post("/layanan", createLayanan);
-router.put("/layanan/:id", updateLayanan);
-router.delete("/layanan/:id", deleteLayanan);
+router.post("/layanan", verifyToken, requireAdmin, createLayanan);
+router.put("/layanan/:id", verifyToken, requireAdmin, updateLayanan);
+router.delete("/layanan/:id", verifyToken, requireAdmin, deleteLayanan);
 
 // PRODUK
 router.get("/produk", getProduk);
-router.post("/produk", createProduk);
-router.put("/produk/:id", updateProduk);
-router.delete("/produk/:id", deleteProduk);
+router.post("/produk", verifyToken, requireAdmin, createProduk);
+router.put("/produk/:id", verifyToken, requireAdmin, updateProduk);
+router.delete("/produk/:id", verifyToken, requireAdmin, deleteProduk);
 
 module.exports = router;

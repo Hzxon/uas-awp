@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 
-const CheckoutModal = ({ isOpen, onClose, cartItems, subtotal, finalTotal, deliveryFee, taxAmount: taxAmountProp, taxRate = 0.1, onConfirmOrder, userName, isSubmitting }) => {
+const CheckoutModal = ({ isOpen, onClose, cartItems, subtotal, finalTotal, deliveryFee, taxAmount: taxAmountProp, taxRate = 0.1, onConfirmOrder, userName, isSubmitting, address, paymentMethod, onPaymentMethodChange, errorMessage, outlet, pickupSlot }) => {
 
     const taxAmount = typeof taxAmountProp === 'number' ? taxAmountProp : Math.round(subtotal * taxRate);
     const delivery = deliveryFee || 0;
@@ -40,6 +40,48 @@ const CheckoutModal = ({ isOpen, onClose, cartItems, subtotal, finalTotal, deliv
                     <p className='font-semibold'>Pesanan untuk: <span className='text-blue-600'>{userName}</span></p>
                     <p>Tanggal Transaksi: <span className='font-medium'>{transactionDate}</span></p>
                     <p>Kode Transaksi: <span className='font-medium text-blue-500'>{orderCode}</span></p>
+                </div>
+
+                {errorMessage && (
+                    <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
+                        {errorMessage}
+                    </div>
+                )}
+
+                {/* Alamat & Pembayaran */}
+                <div className="grid gap-4 md:grid-cols-2 mb-6">
+                    <div className="border rounded-lg p-3 bg-gray-50">
+                        <h4 className="font-semibold text-gray-800 mb-2">Alamat Penjemputan</h4>
+                        {address ? (
+                            <div className="text-sm text-gray-700 space-y-1">
+                                <p className="font-semibold">{address.nama_penerima}</p>
+                                <p>{address.alamat}</p>
+                                {address.phone && <p className="text-gray-500">Telp: {address.phone}</p>}
+                            </div>
+                        ) : (
+                            <p className="text-sm text-red-600">Pilih alamat terlebih dahulu.</p>
+                        )}
+                    </div>
+                    <div className="border rounded-lg p-3 bg-gray-50">
+                        <h4 className="font-semibold text-gray-800 mb-2">Metode Pembayaran</h4>
+                        <select
+                            value={paymentMethod}
+                            onChange={(e) => onPaymentMethodChange?.(e.target.value)}
+                            className="w-full border rounded-lg px-3 py-2 text-sm"
+                        >
+                            <option value="virtual-account">Virtual Account (Mock)</option>
+                            <option value="ewallet">E-Wallet (Mock)</option>
+                            <option value="credit-card">Kartu Kredit (Mock)</option>
+                        </select>
+                        <p className="text-xs text-gray-500 mt-2">
+                            Pembayaran disimulasikan (mock). Status order akan otomatis jadi “paid”.
+                        </p>
+                        <div className="mt-3 border-t pt-2">
+                            <p className="text-sm font-semibold text-gray-800">Outlet</p>
+                            <p className="text-xs text-gray-600">{outlet ? `${outlet.nama} • Ongkir mulai Rp ${Number(outlet.min_biaya || 0).toLocaleString("id-ID")}` : "Belum dipilih"}</p>
+                            {pickupSlot && <p className="text-xs text-gray-600">Slot jemput: {pickupSlot}</p>}
+                        </div>
+                    </div>
                 </div>
 
                 {/* Daftar Produk */}

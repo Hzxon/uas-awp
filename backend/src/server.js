@@ -3,14 +3,20 @@ dotenv.config();
 
 const express = require("express");
 const cors = require("cors");
+const helmet = require("helmet");
 const authRoutes = require("./routes/authRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const itemRoutes = require("./routes/itemRoutes");
 const { verifyToken } = require("./middleware/auth");
 const pool = require("./config/db");
 const masterRoutes = require("./routes/masterRoutes");
+const addressRoutes = require("./routes/addressRoutes");
+const paymentRoutes = require("./routes/paymentRoutes");
+const outletRoutes = require("./routes/outletRoutes");
+const statusRoutes = require("./routes/statusRoutes");
+const outletAdminRoutes = require("./routes/outletAdminRoutes");
 
-// 🔥 PENTING: Tetap gunakan Port 5001 karena 5000 bermasalah di Mac
+// Penting: gunakan Port 5001 karena 5000 bermasalah di Mac
 const PORT = process.env.PORT || 5001;
 const app = express();
 
@@ -21,6 +27,9 @@ app.use(cors({
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+}));
 
 app.use(express.json());
 
@@ -29,6 +38,11 @@ app.use("/api/auth", authRoutes); // Di sini route /me dan /login yang asli bera
 app.use("/api/orders", verifyToken, orderRoutes);
 app.use("/api/items", itemRoutes);
 app.use("/api/masters", masterRoutes);
+app.use("/api/addresses", addressRoutes);
+app.use("/api/payments", paymentRoutes);
+app.use("/api/outlets", outletRoutes);
+app.use("/api/status", statusRoutes);
+app.use("/api/outlets/admin", outletAdminRoutes);
 
 // Health Check
 app.get("/api/health", (req, res) => {
@@ -47,9 +61,9 @@ app.use((err, req, res, next) => {
 });
 
 const startServer = async () => {
-  // 1. SELALU nyalakan server dulu
+  // 1. Nyalakan server dulu
   app.listen(PORT, () => {
-    console.log(`✅ Server REAL running on http://localhost:${PORT}`);
+    console.log(`Server REAL running on http://localhost:${PORT}`);
   });
 
   // 2. Baru coba konek DB (hanya untuk info)
@@ -57,9 +71,9 @@ const startServer = async () => {
     const connection = await pool.getConnection();
     await connection.ping();
     connection.release();
-    console.log("✅ Database connected successfully");
+    console.log("Database connected successfully");
   } catch (err) {
-    console.error("❌ Database Connection Failed: ", err);
+    console.error("Database Connection Failed: ", err);
     // JANGAN process.exit atau throw;
     // biarkan server tetap hidup untuk terima request.
   }

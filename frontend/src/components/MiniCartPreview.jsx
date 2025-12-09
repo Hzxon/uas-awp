@@ -88,14 +88,11 @@ const MiniCartPreview = ({ items = [], cartCount = 0, isLoggedIn, openLoginModal
                 </div>
 
                 <div className="p-4 bg-gray-50 border-t flex space-x-2">
-                    {/* Link ini HANYA ke CartPage */}
-                    <Link to="/cart" className="flex-1 text-center py-2 text-sm rounded-lg border border-green-500 text-green-600 hover:bg-green-50 transition duration-150">
+                    <Link to="/checkout/address" className="flex-1 text-center py-2 text-sm rounded-lg border border-green-500 text-green-600 hover:bg-green-50 transition duration-150">
                         Lihat Keranjang
                     </Link>
-                    {/* Link ini MENGIRIM STATE untuk membuka modal */}
                     <Link 
-                        to="/cart" 
-                        state={{ openCheckout: true }} 
+                        to="/checkout/services" 
                         className="flex-1 text-center py-2 text-sm rounded-lg bg-green-500 text-white hover:bg-green-600 transition duration-150"
                     >
                         Checkout

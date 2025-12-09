@@ -1,9 +1,10 @@
 const pool = require("../config/db");
+const { logAudit } = require("../utils/audit");
 
 exports.getLayanan = async (req, res) => {
   try {
     const [rows] = await pool.query(
-      "SELECT id, nama, deskripsi, harga FROM layanan"
+      "SELECT id, nama, deskripsi, harga, image FROM layanan"
     );
     res.json(rows);
   } catch (err) {
@@ -16,7 +17,7 @@ exports.getLayanan = async (req, res) => {
 exports.getProduk = async (req, res) => {
   try {
     const [rows] = await pool.query(
-      "SELECT id, nama, deskripsi, harga FROM produk"
+      "SELECT id, nama, deskripsi, harga, image FROM produk"
     );
     res.json(rows);
   } catch (err) {
@@ -26,18 +27,27 @@ exports.getProduk = async (req, res) => {
 };
 
 
+// Verfiy akun (hanya admin yang bisa CRUD) 
+const isAdmin = async (req, res) => {
+  const userId = req.params.id;
+
+  const sql = "SELECT * from `Users` WHERE id = userId";
+
+  res.status(200).json({ message: "OK" });
+}
+
 // ========== LAYANAN CRUD ==========
 exports.createLayanan = async (req, res) => {
   try {
-    const { nama, deskripsi, harga } = req.body;
+    const { nama, deskripsi, harga, image } = req.body;
 
     if (!nama || !harga) {
       return res.status(400).json({ message: "Nama dan harga wajib diisi" });
     }
 
     const [result] = await pool.query(
-      "INSERT INTO layanan (nama, deskripsi, harga) VALUES (?, ?, ?)",
-      [nama, deskripsi || "", harga]
+      "INSERT INTO layanan (nama, deskripsi, harga, image) VALUES (?, ?, ?, ?)",
+      [nama, deskripsi || "", harga, image || ""]
     );
 
     res.status(201).json({
@@ -45,6 +55,14 @@ exports.createLayanan = async (req, res) => {
       nama,
       deskripsi: deskripsi || "",
       harga,
+      image: image || "",
+    });
+    await logAudit({
+      actorId: req.user?.id,
+      action: "create",
+      targetType: "layanan",
+      targetId: result.insertId,
+      meta: { nama, harga, hasImage: Boolean(image) },
     });
   } catch (err) {
     console.error("Error createLayanan:", err);
@@ -55,18 +73,25 @@ exports.createLayanan = async (req, res) => {
 exports.updateLayanan = async (req, res) => {
   try {
     const { id } = req.params;
-    const { nama, deskripsi, harga } = req.body;
+    const { nama, deskripsi, harga, image } = req.body;
 
     const [result] = await pool.query(
-      "UPDATE layanan SET nama = ?, deskripsi = ?, harga = ? WHERE id = ?",
-      [nama, deskripsi || "", harga, id]
+      "UPDATE layanan SET nama = ?, deskripsi = ?, harga = ?, image = ? WHERE id = ?",
+      [nama, deskripsi || "", harga, image || "", id]
     );
 
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: "Layanan tidak ditemukan" });
     }
 
-    res.json({ id, nama, deskripsi: deskripsi || "", harga });
+    res.json({ id, nama, deskripsi: deskripsi || "", harga, image: image || "" });
+    await logAudit({
+      actorId: req.user?.id,
+      action: "update",
+      targetType: "layanan",
+      targetId: id,
+      meta: { nama, harga, hasImage: Boolean(image) },
+    });
   } catch (err) {
     console.error("Error updateLayanan:", err);
     res.status(500).json({ message: "Gagal mengubah layanan" });
@@ -87,6 +112,12 @@ exports.deleteLayanan = async (req, res) => {
     }
 
     res.json({ message: "Layanan berhasil dihapus" });
+    await logAudit({
+      actorId: req.user?.id,
+      action: "delete",
+      targetType: "layanan",
+      targetId: id,
+    });
   } catch (err) {
     console.error("Error deleteLayanan:", err);
     res.status(500).json({ message: "Gagal menghapus layanan" });
@@ -97,15 +128,15 @@ exports.deleteLayanan = async (req, res) => {
 
 exports.createProduk = async (req, res) => {
   try {
-    const { nama, deskripsi, harga } = req.body;
+    const { nama, deskripsi, harga, image } = req.body;
 
     if (!nama || !harga) {
       return res.status(400).json({ message: "Nama dan harga wajib diisi" });
     }
 
     const [result] = await pool.query(
-      "INSERT INTO produk (nama, deskripsi, harga) VALUES (?, ?, ?)",
-      [nama, deskripsi || "", harga]
+      "INSERT INTO produk (nama, deskripsi, harga, image) VALUES (?, ?, ?, ?)",
+      [nama, deskripsi || "", harga, image || ""]
     );
 
     res.status(201).json({
@@ -113,6 +144,14 @@ exports.createProduk = async (req, res) => {
       nama,
       deskripsi: deskripsi || "",
       harga,
+      image: image || "",
+    });
+    await logAudit({
+      actorId: req.user?.id,
+      action: "create",
+      targetType: "produk",
+      targetId: result.insertId,
+      meta: { nama, harga, hasImage: Boolean(image) },
     });
   } catch (err) {
     console.error("Error createProduk:", err);
@@ -123,18 +162,25 @@ exports.createProduk = async (req, res) => {
 exports.updateProduk = async (req, res) => {
   try {
     const { id } = req.params;
-    const { nama, deskripsi, harga } = req.body;
+    const { nama, deskripsi, harga, image } = req.body;
 
     const [result] = await pool.query(
-      "UPDATE produk SET nama = ?, deskripsi = ?, harga = ? WHERE id = ?",
-      [nama, deskripsi || "", harga, id]
+      "UPDATE produk SET nama = ?, deskripsi = ?, harga = ?, image = ? WHERE id = ?",
+      [nama, deskripsi || "", harga, image || "", id]
     );
 
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: "Produk tidak ditemukan" });
     }
 
-    res.json({ id, nama, deskripsi: deskripsi || "", harga });
+    res.json({ id, nama, deskripsi: deskripsi || "", harga, image: image || "" });
+    await logAudit({
+      actorId: req.user?.id,
+      action: "update",
+      targetType: "produk",
+      targetId: id,
+      meta: { nama, harga, hasImage: Boolean(image) },
+    });
   } catch (err) {
     console.error("Error updateProduk:", err);
     res.status(500).json({ message: "Gagal mengubah produk" });
@@ -155,6 +201,12 @@ exports.deleteProduk = async (req, res) => {
     }
 
     res.json({ message: "Produk berhasil dihapus" });
+    await logAudit({
+      actorId: req.user?.id,
+      action: "delete",
+      targetType: "produk",
+      targetId: id,
+    });
   } catch (err) {
     console.error("Error deleteProduk:", err);
     res.status(500).json({ message: "Gagal menghapus produk" });
