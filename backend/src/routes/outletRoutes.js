@@ -1,9 +1,11 @@
 const router = require("express").Router();
 const { verifyToken, requireAdmin } = require("../middleware/auth");
-const { listPublic, listAdmin, create, update, remove } = require("../controllers/outletController");
+const { listPublic, listAdmin, create, update, remove, getById, search } = require("../controllers/outletController");
 
-// Public list
+// Public routes
 router.get("/", listPublic);
+router.get("/search", search);
+router.get("/:id", getById);
 
 // Admin operations
 router.get("/admin/all", verifyToken, requireAdmin, listAdmin);

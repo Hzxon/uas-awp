@@ -15,6 +15,9 @@ const paymentRoutes = require("./routes/paymentRoutes");
 const outletRoutes = require("./routes/outletRoutes");
 const statusRoutes = require("./routes/statusRoutes");
 const outletAdminRoutes = require("./routes/outletAdminRoutes");
+const partnerRoutes = require("./routes/partnerRoutes");
+const adminPartnerRoutes = require("./routes/adminPartnerRoutes");
+const reviewRoutes = require("./routes/reviewRoutes");
 
 // Penting: gunakan Port 5001 karena 5000 bermasalah di Mac
 const PORT = process.env.PORT || 5001;
@@ -43,6 +46,15 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/outlets", outletRoutes);
 app.use("/api/status", statusRoutes);
 app.use("/api/outlets/admin", outletAdminRoutes);
+
+// New marketplace routes
+app.use("/api/partner", partnerRoutes);
+app.use("/api/admin/partners", adminPartnerRoutes);
+app.use("/api/reviews", reviewRoutes);
+
+// Admin analytics routes
+const adminAnalyticsRoutes = require("./routes/adminAnalyticsRoutes");
+app.use("/api/admin/analytics", adminAnalyticsRoutes);
 
 // Health Check
 app.get("/api/health", (req, res) => {

@@ -36,33 +36,30 @@ const ModalAuth = ({ type, onClose, onLoginSuccess, onRegisterSuccess, setModalT
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center px-4 py-6 bg-slate-900/70 backdrop-blur"
+      className="fixed inset-0 z-[100] flex items-center justify-center px-4 py-6 bg-slate-900/60 backdrop-blur-sm"
       onClick={onClose}
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800/90 to-slate-900" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,#2dd4bf22,transparent_40%),radial-gradient(circle_at_bottom_right,#60a5fa22,transparent_35%)]" />
-
       <div
-        className="relative w-full max-w-4xl grid md:grid-cols-[1.05fr_1fr] rounded-3xl overflow-hidden shadow-2xl border border-white/10 bg-white/5"
+        className="relative w-full max-w-4xl grid md:grid-cols-[1.05fr_1fr] rounded-card overflow-hidden shadow-2xl border border-slate-200 bg-white"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Left visual */}
-        <div className="hidden md:flex flex-col justify-between bg-gradient-to-br from-slate-900 via-slate-900/90 to-slate-800 text-white p-10">
+        <div className="hidden md:flex flex-col justify-between bg-gradient-to-br from-slate-900 to-slate-800 text-white p-10">
           <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-xs font-semibold">
-              <i className="fas fa-bolt text-amber-300"></i> Laundry on-demand
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 text-sm font-medium">
+              <i className="fas fa-bolt text-amber-400"></i> Laundry on-demand
             </div>
             <h2 className="text-3xl font-bold leading-tight">
               Rapi. Wangi. Antrean aman.
             </h2>
-            <p className="text-sm text-white/80">
+            <p className="text-sm text-white/80 leading-relaxed">
               Masuk untuk melanjutkan pesanan, lacak kurir, dan simpan preferensi cucian Anda.
             </p>
           </div>
           <div className="flex flex-wrap gap-2 text-xs text-white/70">
-            <span className="px-3 py-1 rounded-full bg-white/10 border border-white/10">Same day ready</span>
-            <span className="px-3 py-1 rounded-full bg-white/10 border border-white/10">Kurir terverifikasi</span>
-            <span className="px-3 py-1 rounded-full bg-white/10 border border-white/10">Garansi ulang gratis</span>
+            <span className="px-3 py-1.5 rounded-full bg-white/10 border border-white/10">Same day ready</span>
+            <span className="px-3 py-1.5 rounded-full bg-white/10 border border-white/10">Kurir terverifikasi</span>
+            <span className="px-3 py-1.5 rounded-full bg-white/10 border border-white/10">Garansi ulang gratis</span>
           </div>
         </div>
 
@@ -134,7 +131,7 @@ const ModalAuth = ({ type, onClose, onLoginSuccess, onRegisterSuccess, setModalT
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-slate-900 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition duration-150 shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full bg-primary-600 text-white py-3 rounded-button font-semibold hover:bg-primary-700 transition-colors shadow-soft disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {isLogin ? (isSubmitting ? 'Memproses...' : 'Masuk') : (isSubmitting ? 'Memproses...' : 'Daftar')}
             </button>
@@ -144,7 +141,7 @@ const ModalAuth = ({ type, onClose, onLoginSuccess, onRegisterSuccess, setModalT
             {isLogin ? "Belum punya akun?" : "Sudah punya akun?"}
             <button
               onClick={() => setModalType(isLogin ? 'register' : 'login')}
-              className="text-blue-600 hover:text-blue-700 font-semibold ml-1"
+              className="text-primary-600 hover:text-primary-700 font-semibold ml-1 transition-colors"
             >
               {isLogin ? 'Daftar di sini' : 'Masuk di sini'}
             </button>

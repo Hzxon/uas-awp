@@ -10,6 +10,11 @@ import PaymentSuccess from "./components/PaymentSuccess";
 import CheckoutPaymentPage from "./components/CheckoutPaymentPage";
 import NotFound from "./components/NotFound";
 import OrderStatusPage from "./components/OrderStatusPage";
+import PartnerRegistration from "./components/partner/PartnerRegistration";
+import PartnerDashboard from "./components/partner/PartnerDashboard";
+import PartnerOrders from "./components/partner/PartnerOrders";
+import SearchPage from "./components/search/SearchPage";
+import OutletDetailPage from "./components/search/OutletDetailPage";
 
 const ProtectedRoute = ({ isLoggedIn, onRequireAuth, children }) => {
   useEffect(() => {
@@ -314,6 +319,75 @@ const App = () => {
             <ProtectedRoute isLoggedIn={isLoggedIn} onRequireAuth={requireLogin}>
               <OrderStatusPage authToken={authToken} />
             </ProtectedRoute>
+          }
+        />
+
+        {/* Partner Routes */}
+        <Route
+          path="/partner/register"
+          element={
+            <ProtectedRoute isLoggedIn={isLoggedIn} onRequireAuth={requireLogin}>
+              <PartnerRegistration token={authToken} />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/partner/dashboard"
+          element={
+            <ProtectedRoute isLoggedIn={isLoggedIn} onRequireAuth={requireLogin}>
+              {user?.role === "partner" || user?.role === "admin" ? (
+                <PartnerDashboard token={authToken} />
+              ) : (
+                <Navigate to="/partner/register" replace />
+              )}
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/partner/orders"
+          element={
+            <ProtectedRoute isLoggedIn={isLoggedIn} onRequireAuth={requireLogin}>
+              {user?.role === "partner" || user?.role === "admin" ? (
+                <PartnerOrders token={authToken} />
+              ) : (
+                <Navigate to="/partner/register" replace />
+              )}
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Search Routes */}
+        <Route
+          path="/search"
+          element={
+            <SearchPage
+              isLoggedIn={isLoggedIn}
+              onLogout={handleLogout}
+              cartCount={cartCount}
+              cartItems={cartItems}
+              userName={user?.nama || ""}
+              openModal={openModal}
+              userRole={user?.role || ""}
+            />
+          }
+        />
+
+        <Route
+          path="/outlet/:id"
+          element={
+            <OutletDetailPage
+              isLoggedIn={isLoggedIn}
+              onLogout={handleLogout}
+              onAddToCart={handleAddToCart}
+              cartCount={cartCount}
+              cartItems={cartItems}
+              userName={user?.nama || ""}
+              openModal={openModal}
+              userRole={user?.role || ""}
+              token={authToken}
+            />
           }
         />
 

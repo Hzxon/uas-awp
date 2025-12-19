@@ -19,6 +19,7 @@ const OutletSelector = ({ selectedOutlet, onSelect }) => {
   const [error, setError] = useState("");
   const [userLoc, setUserLoc] = useState(null);
   const [locError, setLocError] = useState("");
+  const [isLocating, setIsLocating] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -52,18 +53,40 @@ const OutletSelector = ({ selectedOutlet, onSelect }) => {
 
   const handleGeo = () => {
     setLocError("");
+    setIsLocating(true);
+
     if (!navigator.geolocation) {
       setLocError("Browser tidak mendukung geolokasi");
+      setIsLocating(false);
       return;
     }
+
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        setUserLoc({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        const newLoc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        setUserLoc(newLoc);
+        setIsLocating(false);
+
+        // Auto-select nearest outlet after getting location
+        if (outlets.length > 0) {
+          const sortedByDistance = outlets
+            .filter((o) => o.lat != null && o.lng != null)
+            .map((o) => ({
+              ...o,
+              distance: distanceKm(newLoc.lat, newLoc.lng, Number(o.lat), Number(o.lng)),
+            }))
+            .sort((a, b) => a.distance - b.distance);
+
+          if (sortedByDistance.length > 0) {
+            onSelect?.(sortedByDistance[0]);
+          }
+        }
       },
       (err) => {
         setLocError(err.message || "Gagal mendapatkan lokasi");
+        setIsLocating(false);
       },
-      { enableHighAccuracy: true, timeout: 8000 }
+      { enableHighAccuracy: true, timeout: 10000 }
     );
   };
 
@@ -73,62 +96,169 @@ const OutletSelector = ({ selectedOutlet, onSelect }) => {
   }, [outletsWithDistance]);
 
   return (
-    <section className="bg-white border border-slate-100 rounded-2xl shadow-sm p-5 mb-10">
-      <div className="flex items-center justify-between mb-3">
-        <div>
-          <p className="text-xs uppercase tracking-wide text-slate-500">Outlet terdekat</p>
-          <h3 className="text-lg font-bold text-slate-900">Pilih lokasi operasional</h3>
-        </div>
-        <button
-          onClick={handleGeo}
-          className="text-sm px-3 py-2 rounded-full border border-slate-200 text-slate-700 hover:border-blue-400 hover:text-blue-600 transition"
-        >
-          Gunakan lokasi saya
-        </button>
-      </div>
-      {locError && <p className="text-xs text-red-600 mb-2">{locError}</p>}
-      {error && <p className="text-sm text-red-600 mb-2">{error}</p>}
-      {loading ? (
-        <p className="text-sm text-slate-500">Memuat outlet...</p>
-      ) : outletsWithDistance.length === 0 ? (
-        <p className="text-sm text-slate-500">Belum ada outlet aktif.</p>
-      ) : (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {outletsWithDistance.map((outlet) => {
-            const active = selectedOutlet && selectedOutlet.id === outlet.id;
-            return (
-              <button
-                key={outlet.id}
-                onClick={() => onSelect?.(outlet)}
-                className={`text-left p-3 rounded-xl border transition ${
-                  active ? "border-blue-400 bg-blue-50" : "border-slate-200 hover:border-blue-200"
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <h4 className="font-semibold text-slate-900">{outlet.nama}</h4>
-                  <span className="text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-600">
-                    {outlet.coverage_radius_km || 5} km
-                  </span>
+    <section className="outlet-selector">
+      <div className="outlet-selector-container">
+        {/* Left side - 3D Laundry Store Illustration */}
+        <div className="outlet-illustration">
+          <div className="store-3d">
+            {/* Building */}
+            <div className="store-building">
+              <div className="store-roof"></div>
+              <div className="store-body">
+                <div className="store-sign">
+                  <span>WashFast</span>
                 </div>
-                <p className="text-xs text-slate-500 line-clamp-2">{outlet.alamat}</p>
-                <p className="text-xs text-slate-500 mt-1">
-                  Ongkir mulai Rp {Number(outlet.min_biaya || 0).toLocaleString("id-ID")}
-                </p>
-                {outlet.distance != null && (
-                  <p className="text-xs text-blue-600 mt-1">
-                    ~{outlet.distance.toFixed(1)} km dari lokasi Anda
-                  </p>
-                )}
-              </button>
-            );
-          })}
+                <div className="store-window">
+                  <div className="window-machine"></div>
+                  <div className="window-machine"></div>
+                </div>
+                <div className="store-door"></div>
+              </div>
+            </div>
+
+            {/* Floating elements */}
+            <div className="floating-bubble bubble-1">
+              <i className="fas fa-tshirt"></i>
+            </div>
+            <div className="floating-bubble bubble-2">
+              <i className="fas fa-droplet"></i>
+            </div>
+            <div className="floating-bubble bubble-3">
+              <i className="fas fa-sparkles"></i>
+            </div>
+
+            {/* Location pin */}
+            <div className="location-pin">
+              <i className="fas fa-location-dot"></i>
+              <div className="pin-pulse"></div>
+            </div>
+          </div>
         </div>
-      )}
-      {nearest && (
-        <p className="text-xs text-slate-500 mt-2">
-          Rekomendasi: {nearest.nama} ({nearest.distance.toFixed(1)} km)
-        </p>
-      )}
+
+        {/* Right side - Content */}
+        <div className="outlet-content">
+          <div className="outlet-header">
+            <div className="outlet-header-text">
+              <h3 className="outlet-title">
+                <i className="fas fa-map-marker-alt"></i>
+                Temukan Outlet Terdekat
+              </h3>
+            </div>
+
+            <button
+              onClick={handleGeo}
+              disabled={isLocating}
+              className={`location-btn ${isLocating ? 'locating' : ''} ${userLoc ? 'located' : ''}`}
+            >
+              {isLocating ? (
+                <>
+                  <span className="btn-spinner"></span>
+                  <span>Mencari...</span>
+                </>
+              ) : userLoc ? (
+                <>
+                  <i className="fas fa-check-circle"></i>
+                  <span>Lokasi Ditemukan</span>
+                </>
+              ) : (
+                <>
+                  <i className="fas fa-location-crosshairs"></i>
+                  <span>Gunakan Lokasi Saya</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          {locError && (
+            <div className="outlet-error">
+              <i className="fas fa-exclamation-circle"></i>
+              <span>{locError}</span>
+            </div>
+          )}
+
+          {error && (
+            <div className="outlet-error">
+              <i className="fas fa-exclamation-circle"></i>
+              <span>{error}</span>
+            </div>
+          )}
+
+          {loading ? (
+            <div className="outlet-loading">
+              <div className="loading-spinner"></div>
+              <span>Memuat outlet...</span>
+            </div>
+          ) : outletsWithDistance.length === 0 ? (
+            <div className="outlet-empty">
+              <i className="fas fa-store-slash"></i>
+              <span>Belum ada outlet aktif.</span>
+            </div>
+          ) : (
+            <div className="outlet-grid">
+              {outletsWithDistance.slice(0, 3).map((outlet) => {
+                const active = selectedOutlet && selectedOutlet.id === outlet.id;
+                const isNearest = nearest && nearest.id === outlet.id && userLoc;
+
+                return (
+                  <button
+                    key={outlet.id}
+                    onClick={() => onSelect?.(outlet)}
+                    className={`outlet-card ${active ? 'active' : ''} ${isNearest ? 'nearest' : ''}`}
+                  >
+                    {isNearest && (
+                      <div className="nearest-badge">
+                        <i className="fas fa-star"></i>
+                        Terdekat
+                      </div>
+                    )}
+
+                    <div className="outlet-card-header">
+                      <div className="outlet-icon">
+                        <i className="fas fa-store"></i>
+                      </div>
+                      <div className="outlet-info">
+                        <h4 className="outlet-name">{outlet.nama}</h4>
+                        <p className="outlet-address">{outlet.alamat}</p>
+                      </div>
+                    </div>
+
+                    <div className="outlet-card-footer">
+                      <div className="outlet-detail">
+                        <i className="fas fa-truck"></i>
+                        <span>Rp {Number(outlet.min_biaya || 0).toLocaleString("id-ID")}</span>
+                      </div>
+
+                      {outlet.distance != null ? (
+                        <div className="outlet-distance">
+                          <i className="fas fa-route"></i>
+                          <span>{outlet.distance.toFixed(1)} km</span>
+                        </div>
+                      ) : (
+                        <div className="outlet-radius">
+                          <i className="fas fa-circle-dot"></i>
+                          <span>{outlet.coverage_radius_km || 5} km</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {active && (
+                      <div className="selected-indicator">
+                        <i className="fas fa-check"></i>
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {outletsWithDistance.length > 3 && (
+            <p className="outlet-more">
+              +{outletsWithDistance.length - 3} outlet lainnya tersedia
+            </p>
+          )}
+        </div>
+      </div>
     </section>
   );
 };
