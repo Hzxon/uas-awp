@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { authApi } from '../api';
+
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 const ModalAuth = ({ type, onClose, onLoginSuccess, onRegisterSuccess, setModalType }) => {
   const [name, setName] = useState('');
@@ -8,8 +10,39 @@ const ModalAuth = ({ type, onClose, onLoginSuccess, onRegisterSuccess, setModalT
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const googleButtonRef = useRef(null);
 
   const isLogin = type === 'login';
+
+  // Initialize Google Sign-In
+  useEffect(() => {
+    if (window.google && googleButtonRef.current) {
+      window.google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleGoogleResponse,
+      });
+      window.google.accounts.id.renderButton(googleButtonRef.current, {
+        theme: 'outline',
+        size: 'large',
+        width: '100%',
+        text: isLogin ? 'signin_with' : 'signup_with',
+        shape: 'pill',
+      });
+    }
+  }, [isLogin]);
+
+  const handleGoogleResponse = async (response) => {
+    setError('');
+    setIsSubmitting(true);
+    try {
+      const data = await authApi.googleLogin(response.credential);
+      onLoginSuccess?.(data);
+    } catch (err) {
+      setError(err.message || 'Gagal login dengan Google');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -40,41 +73,41 @@ const ModalAuth = ({ type, onClose, onLoginSuccess, onRegisterSuccess, setModalT
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-4xl grid md:grid-cols-[1.05fr_1fr] rounded-card overflow-hidden shadow-2xl border border-slate-200 bg-white"
+        className="relative w-full max-w-4xl grid md:grid-cols-[1.05fr_1fr] rounded-2xl overflow-hidden shadow-2xl border border-white/20"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Left visual */}
-        <div className="hidden md:flex flex-col justify-between bg-gradient-to-br from-slate-900 to-slate-800 text-white p-10">
-          <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 text-sm font-medium">
-              <i className="fas fa-bolt text-amber-400"></i> Laundry on-demand
-            </div>
-            <h2 className="text-3xl font-bold leading-tight">
-              Rapi. Wangi. Antrean aman.
-            </h2>
-            <p className="text-sm text-white/80 leading-relaxed">
-              Masuk untuk melanjutkan pesanan, lacak kurir, dan simpan preferensi cucian Anda.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2 text-xs text-white/70">
-            <span className="px-3 py-1.5 rounded-full bg-white/10 border border-white/10">Same day ready</span>
-            <span className="px-3 py-1.5 rounded-full bg-white/10 border border-white/10">Kurir terverifikasi</span>
-            <span className="px-3 py-1.5 rounded-full bg-white/10 border border-white/10">Garansi ulang gratis</span>
-          </div>
+        {/* Left visual - Clean image only */}
+        <div className="hidden md:block relative overflow-hidden">
+          <img
+            src="/laundry-auth-banner.png"
+            alt="WashFast Laundry"
+            className="w-full h-full object-cover"
+          />
         </div>
 
-        {/* Right form */}
-        <div className="bg-white p-8 md:p-10">
+        {/* Right form - Light beach theme */}
+        <div className="bg-gradient-to-b from-cyan-50 via-white to-amber-50 p-8 md:p-10">
           <div className="flex items-start justify-between mb-6">
             <div>
-              <p className="text-xs uppercase tracking-wide text-slate-500">{isLogin ? 'Selamat datang kembali' : 'Mulai gratis'}</p>
-              <h2 className="text-3xl font-bold text-slate-900">
+              <h2 className="text-3xl font-bold text-slate-800">
                 {isLogin ? 'Masuk WashFast' : 'Daftar WashFast'}
               </h2>
             </div>
-            <button onClick={onClose} className="text-slate-400 hover:text-slate-700 text-2xl">
+            <button onClick={onClose} className="text-slate-400 hover:text-slate-700 text-2xl transition-colors">
               &times;
             </button>
+          </div>
+
+          {/* Google Sign-In Button */}
+          <div className="mb-4">
+            <div ref={googleButtonRef} className="w-full flex justify-center"></div>
+          </div>
+
+          {/* Divider */}
+          <div className="flex items-center gap-3 my-4">
+            <div className="flex-1 h-px bg-slate-200"></div>
+            <span className="text-sm text-slate-400">atau</span>
+            <div className="flex-1 h-px bg-slate-200"></div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -86,7 +119,7 @@ const ModalAuth = ({ type, onClose, onLoginSuccess, onRegisterSuccess, setModalT
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
-                  className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900"
+                  className="w-full px-4 py-3 rounded-xl bg-white border border-slate-200 text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-400 transition-all"
                   placeholder="Masukkan nama Anda"
                 />
               </div>
@@ -98,7 +131,7 @@ const ModalAuth = ({ type, onClose, onLoginSuccess, onRegisterSuccess, setModalT
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900"
+                className="w-full px-4 py-3 rounded-xl bg-white border border-slate-200 text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-400 transition-all"
                 placeholder="email@contoh.com"
               />
             </div>
@@ -109,7 +142,7 @@ const ModalAuth = ({ type, onClose, onLoginSuccess, onRegisterSuccess, setModalT
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900"
+                className="w-full px-4 py-3 rounded-xl bg-white border border-slate-200 text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-400 transition-all"
                 placeholder="********"
               />
             </div>
@@ -121,17 +154,17 @@ const ModalAuth = ({ type, onClose, onLoginSuccess, onRegisterSuccess, setModalT
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
-                  className="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900"
+                  className="w-full px-4 py-3 rounded-xl bg-white border border-slate-200 text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-teal-400 transition-all"
                   placeholder="********"
                 />
               </div>
             )}
-            {error && <p className="text-sm text-red-600">{error}</p>}
+            {error && <p className="text-sm text-red-600 bg-red-50 p-3 rounded-lg">{error}</p>}
 
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-primary-600 text-white py-3 rounded-button font-semibold hover:bg-primary-700 transition-colors shadow-soft disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full bg-gradient-to-r from-orange-400 to-amber-500 text-white py-3 rounded-xl font-semibold hover:from-orange-500 hover:to-amber-600 transition-all shadow-lg shadow-orange-200 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {isLogin ? (isSubmitting ? 'Memproses...' : 'Masuk') : (isSubmitting ? 'Memproses...' : 'Daftar')}
             </button>
@@ -141,7 +174,7 @@ const ModalAuth = ({ type, onClose, onLoginSuccess, onRegisterSuccess, setModalT
             {isLogin ? "Belum punya akun?" : "Sudah punya akun?"}
             <button
               onClick={() => setModalType(isLogin ? 'register' : 'login')}
-              className="text-primary-600 hover:text-primary-700 font-semibold ml-1 transition-colors"
+              className="text-teal-600 hover:text-teal-700 font-semibold ml-1 transition-colors"
             >
               {isLogin ? 'Daftar di sini' : 'Masuk di sini'}
             </button>

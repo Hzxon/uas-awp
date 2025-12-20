@@ -12,8 +12,8 @@ import { Link } from 'react-router-dom';
  * Menampilkan ringkasan keranjang atau pesan login/kosong berdasarkan state.
  */
 
-const MiniCartPreview = ({ items = [], cartCount = 0, isLoggedIn, openLoginModal = () => {} }) => {
-    
+const MiniCartPreview = ({ items = [], cartCount = 0, isLoggedIn, openLoginModal = () => { } }) => {
+
     const subtotal = items.reduce((sum, item) => {
         const qty = item.qty ?? item.quantity ?? 0;
         return sum + (item.price * qty);
@@ -25,35 +25,35 @@ const MiniCartPreview = ({ items = [], cartCount = 0, isLoggedIn, openLoginModal
     if (!isLoggedIn) {
         content = (
             <div className="text-center p-6 space-y-4">
-                <i className="fas fa-lock text-blue-600 text-4xl"></i>
+                <i className="fas fa-lock text-teal-500 text-4xl"></i>
                 <h4 className="font-bold text-lg text-gray-800">Ups, Keranjang Terkunci!</h4>
                 <p className="text-gray-600 text-sm">
                     Silakan masuk atau daftar untuk menyimpan pesanan Anda.
                 </p>
-                <button 
+                <button
                     onClick={() => openLoginModal('login')}
-                    className="inline-block bg-blue-600 text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-blue-700 transition duration-150 shadow-md w-full"
+                    className="inline-block bg-gradient-to-r from-orange-400 to-amber-500 text-white py-2 px-4 rounded-lg text-sm font-medium hover:from-orange-500 hover:to-amber-600 transition duration-150 shadow-md w-full"
                 >
                     Masuk Sekarang
                 </button>
             </div>
         );
-    } 
+    }
     // --- SKENARIO 2: SUDAH LOGIN, KERANJANG KOSONG ---
     else if (items.length === 0) {
         content = (
             <div className="text-center p-6 space-y-4">
-                <i className="fas fa-basket-shopping text-green-500 text-4xl"></i>
+                <i className="fas fa-basket-shopping text-teal-500 text-4xl"></i>
                 <h4 className="font-bold text-lg text-gray-800">Keranjang masih kosong, nih!</h4>
                 <p className="text-gray-600 text-sm">
                     Yuk, pilih layanan atau produk andalan WashFast!
                 </p>
-                <a href="#layanan-terbaik" className="inline-block border border-green-500 text-green-600 py-2 px-4 rounded-lg text-sm font-medium hover:bg-green-50 transition duration-150 w-full">
+                <a href="#layanan-terbaik" className="inline-block border border-orange-400 text-orange-500 py-2 px-4 rounded-lg text-sm font-medium hover:bg-orange-50 transition duration-150 w-full">
                     Mulai Pesan
                 </a>
             </div>
         );
-    } 
+    }
     // --- SKENARIO 3: SUDAH LOGIN, ADA ITEM ---
     else {
         content = (
@@ -81,19 +81,19 @@ const MiniCartPreview = ({ items = [], cartCount = 0, isLoggedIn, openLoginModal
                         <span>Subtotal:</span>
                         <span>Rp {subtotal.toLocaleString('id-ID')}</span>
                     </div>
-                    <div className="flex justify-between text-lg font-bold text-green-600 pt-2 border-t mt-2">
+                    <div className="flex justify-between text-lg font-bold text-teal-600 pt-2 border-t mt-2">
                         <span>Total:</span>
                         <span>Rp {(subtotal + shippingFee).toLocaleString('id-ID')}</span>
                     </div>
                 </div>
 
                 <div className="p-4 bg-gray-50 border-t flex space-x-2">
-                    <Link to="/checkout/address" className="flex-1 text-center py-2 text-sm rounded-lg border border-green-500 text-green-600 hover:bg-green-50 transition duration-150">
+                    <Link to="/checkout/address" className="flex-1 text-center py-2 text-sm rounded-lg border border-teal-500 text-teal-600 hover:bg-teal-50 transition duration-150">
                         Lihat Keranjang
                     </Link>
-                    <Link 
-                        to="/checkout/services" 
-                        className="flex-1 text-center py-2 text-sm rounded-lg bg-green-500 text-white hover:bg-green-600 transition duration-150"
+                    <Link
+                        to="/checkout/services"
+                        className="flex-1 text-center py-2 text-sm rounded-lg bg-gradient-to-r from-orange-400 to-amber-500 text-white hover:from-orange-500 hover:to-amber-600 transition duration-150"
                     >
                         Checkout
                     </Link>
@@ -103,12 +103,12 @@ const MiniCartPreview = ({ items = [], cartCount = 0, isLoggedIn, openLoginModal
     }
 
     return (
-        <div 
+        <div
             className="absolute right-0 w-80 max-w-sm bg-white rounded-xl shadow-2xl border border-gray-100 z-[1000] 
                        transform origin-top-right transition duration-300 ease-out"
-            style={{ 
-                right: '0', 
-                top: '100%', 
+            style={{
+                right: '0',
+                top: '100%',
             }}
         >
             {isLoggedIn && (

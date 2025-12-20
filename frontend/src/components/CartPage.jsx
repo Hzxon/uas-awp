@@ -6,6 +6,7 @@ import CheckoutModal from './CheckoutModal';
 import ExitConfirmationModal from './ExitConfirmationModal';
 import { orderApi, addressApi, paymentApi, outletApi } from '../api';
 import AddressFormPanel from './AddressFormPanel';
+import OutletMapView from './OutletMapView';
 // import { format } from '../../../backend/src/config/db';
 
 const CartPage = ({
@@ -43,6 +44,7 @@ const CartPage = ({
   const [paymentMethod, setPaymentMethod] = useState("virtual-account");
   const [isAddrLoading, setIsAddrLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState("");
+  const [validationMessage, setValidationMessage] = useState("");
   const [addressForm, setAddressForm] = useState({
     label: "Rumah",
     nama_penerima: "",
@@ -62,20 +64,22 @@ const CartPage = ({
   const [outlets, setOutlets] = useState([]);
 
   const handleOpenCheckout = useCallback(() => {
+    setValidationMessage("");
+
     if (cartItems.length === 0) {
-      alert("Keranjang masih kosong!");
+      setValidationMessage("Keranjang masih kosong! Silakan pilih layanan terlebih dahulu dari halaman utama.");
       return;
     }
     if (!isLoggedIn) {
-      alert("Silakan login dahulu untuk melanjutkan pembayaran.");
+      setValidationMessage("Silakan login dahulu untuk melanjutkan pembayaran.");
       return;
     }
     if (!selectedOutlet) {
-      alert("Pilih outlet terlebih dahulu.");
+      setValidationMessage("Pilih outlet terlebih dahulu.");
       return;
     }
     if (!selectedAddressId) {
-      alert("Pilih atau tambah alamat penjemputan terlebih dahulu.");
+      setValidationMessage("Pilih atau tambah alamat penjemputan terlebih dahulu.");
       return;
     }
     if (!showAddressPanel && nextPath) {
@@ -252,7 +256,7 @@ const CartPage = ({
 
   if (isAddressOnly) {
     return (
-      <div className="min-h-screen bg-[#fdeee6]">
+      <div className="checkout-address-page">
         <Navbar
           cartCount={cartCount}
           cartItems={cartItems}
@@ -262,32 +266,35 @@ const CartPage = ({
           onNavigating={handleNavAttempt}
         />
 
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <div className="mb-6 flex flex-wrap items-center gap-2 text-sm text-slate-600">
-            <span className="px-3 py-1 rounded-full bg-white/70 font-semibold text-orange-600">Step 1</span>
-            <span className="font-semibold text-slate-800">Informasi Pickup</span>
-            <span className="text-slate-400">→</span>
+        <div className="checkout-address-container">
+          {/* Breadcrumb */}
+          <div className="checkout-breadcrumb">
+            <span className="step-badge">Step 1</span>
+            <span className="active-step">Informasi Pickup</span>
+            <span className="step-arrow">→</span>
             <span>Layanan</span>
-            <span className="text-slate-400">→</span>
+            <span className="step-arrow">→</span>
             <span>Pembayaran</span>
           </div>
 
-          <div className="bg-white rounded-3xl shadow-xl border border-orange-100 overflow-hidden">
-            <div className="px-6 py-5 border-b border-orange-100 flex items-center justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-wide text-orange-600 font-semibold">Informasi Pemesanan</p>
-                <h1 className="text-2xl font-bold text-slate-900">Alamat Pickup & Kontak</h1>
-                <p className="text-slate-500 text-sm">Lengkapi alamat penjemputan sebelum memilih layanan.</p>
+          {/* Main Card */}
+          <div className="checkout-main-card">
+            {/* Header */}
+            <div className="checkout-header">
+              <div className="checkout-header-content">
+                <h1>Alamat Pickup & Kontak</h1>
               </div>
-              <div className="hidden sm:flex items-center gap-2 text-orange-600">
-                <i className="fas fa-map-marked-alt text-2xl"></i>
+              <div className="checkout-header-icon">
+                <i className="fas fa-map-marked-alt"></i>
               </div>
             </div>
 
-            <div className="p-6 space-y-6">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-semibold text-slate-800">Outlet</label>
+            {/* Body */}
+            <div className="checkout-body">
+              {/* Outlet & Slot Selection */}
+              <div className="checkout-grid">
+                <div className="checkout-field">
+                  <label>Outlet</label>
                   <select
                     value={selectedOutlet?.id || ""}
                     onChange={(e) => {
@@ -295,7 +302,6 @@ const CartPage = ({
                       setSelectedOutlet(outlet || null);
                       localStorage.setItem("selectedOutlet", JSON.stringify(outlet || null));
                     }}
-                    className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-orange-300"
                   >
                     <option value="" disabled>Pilih outlet</option>
                     {outlets.map((o) => (
@@ -304,58 +310,75 @@ const CartPage = ({
                       </option>
                     ))}
                   </select>
-                  <p className="text-xs text-slate-500">Pengiriman akan dihitung berdasarkan jarak outlet dan alamat pickup.</p>
+                  <p className="field-hint">Pengiriman akan dihitung berdasarkan jarak outlet dan alamat pickup.</p>
                   {!selectedOutlet && (
                     <p className="text-xs text-red-600">Harap pilih outlet untuk lanjut.</p>
                   )}
                 </div>
 
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-semibold text-slate-800">Slot jemput</label>
+                <div className="checkout-field">
+                  <label>Slot Jemput</label>
                   <select
                     value={pickupSlot}
                     onChange={(e) => {
                       setPickupSlot(e.target.value);
                       localStorage.setItem("pickupSlot", e.target.value);
                     }}
-                    className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-orange-300"
                   >
                     {slots.map((slot) => (
                       <option key={slot} value={slot}>{slot}</option>
                     ))}
                   </select>
-                  <p className="text-xs text-slate-500">Estimasi kedatangan dihitung otomatis berdasar jarak.</p>
                 </div>
               </div>
 
-              <AddressFormPanel
-                addresses={addresses}
-                selectedAddressId={selectedAddressId}
-                setSelectedAddressId={(id) => {
-                  setSelectedAddressId(id);
-                  localStorage.setItem("selectedAddressId", id ?? "");
+              {/* Outlet Map */}
+              <OutletMapView
+                outlets={outlets}
+                selectedOutlet={selectedOutlet}
+                onSelectOutlet={(outlet) => {
+                  setSelectedOutlet(outlet);
+                  localStorage.setItem("selectedOutlet", JSON.stringify(outlet));
                 }}
-                addressForm={addressForm}
-                setAddressForm={setAddressForm}
-                onSubmit={handleAddAddress}
-                onCancel={() => setIsAddingAddress((p) => !p)}
-                isAdding={isAddingAddress}
-                isLoading={isAddrLoading}
+                height="350px"
               />
 
-              <div className="flex flex-col sm:flex-row justify-between items-center gap-3 pt-2">
-                <Link
-                  to="/"
-                  className="w-full sm:w-auto text-center px-4 py-3 rounded-lg border border-slate-200 text-slate-700 hover:border-slate-300 bg-white"
-                >
-                  ← Kembali
+              {/* Address Form Panel */}
+              <div style={{ marginTop: '1.5rem' }}>
+                <AddressFormPanel
+                  addresses={addresses}
+                  selectedAddressId={selectedAddressId}
+                  setSelectedAddressId={(id) => {
+                    setSelectedAddressId(id);
+                    localStorage.setItem("selectedAddressId", id ?? "");
+                  }}
+                  addressForm={addressForm}
+                  setAddressForm={setAddressForm}
+                  onSubmit={handleAddAddress}
+                  onCancel={() => setIsAddingAddress((p) => !p)}
+                  isAdding={isAddingAddress}
+                  isLoading={isAddrLoading}
+                />
+              </div>
+
+              {/* Footer Actions */}
+              <div className="checkout-footer">
+                <Link to="/" className="checkout-btn-back">
+                  <i className="fas fa-arrow-left"></i>
+                  Kembali
                 </Link>
-                <button
-                  onClick={handleOpenCheckout}
-                  className="w-full sm:w-auto px-6 py-3 rounded-lg bg-orange-500 text-white font-semibold hover:bg-orange-600 shadow-md"
-                >
-                  Lanjut ke Layanan
-                </button>
+                <div className="checkout-footer-right">
+                  {validationMessage && (
+                    <div className="checkout-validation-message">
+                      <i className="fas fa-exclamation-circle"></i>
+                      <span>{validationMessage}</span>
+                    </div>
+                  )}
+                  <button onClick={handleOpenCheckout} className="checkout-btn-next">
+                    Lanjut ke Layanan
+                    <i className="fas fa-arrow-right"></i>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -373,7 +396,7 @@ const CartPage = ({
   }
 
   return (
-    <div className="bg-blue-50 min-h-screen">
+    <div className="checkout-address-page">
       <Navbar
         cartCount={cartCount}
         cartItems={cartItems}
@@ -383,16 +406,26 @@ const CartPage = ({
         onNavigating={handleNavAttempt}
       />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-4xl font-extrabold text-gray-800 mb-8 flex items-center">
-          <i className="fas fa-shopping-basket text-blue-600 mr-4"></i> Keranjang Belanja Anda
+      <div className="checkout-address-container">
+        {/* Breadcrumb */}
+        <div className="checkout-breadcrumb">
+          <span className="step-badge">Step 2</span>
+          <span>Informasi Pickup</span>
+          <span className="step-arrow">→</span>
+          <span className="active-step">Layanan</span>
+          <span className="step-arrow">→</span>
+          <span>Pembayaran</span>
+        </div>
+
+        <h1 className="text-3xl font-bold text-slate-800 mb-6 flex items-center gap-3">
+          <i className="fas fa-shopping-basket text-teal-600"></i> Keranjang Belanja Anda
         </h1>
 
         {showItemsPanel && cartItems.length === 0 ? (
-          <div className="text-center py-20 bg-white rounded-xl shadow-lg">
-            <i className="fas fa-box-open text-6xl text-gray-400 mb-4"></i>
-            <p className="text-xl text-gray-600 mb-4">Keranjang Anda masih kosong.</p>
-            <Link to="/" className="text-blue-600 font-semibold hover:text-blue-800 transition duration-150">
+          <div className="checkout-main-card">
+            <i className="fas fa-box-open text-6xl text-slate-400 mb-4"></i>
+            <p className="text-xl text-slate-600 mb-4">Keranjang Anda masih kosong.</p>
+            <Link to="/" className="text-teal-600 font-semibold hover:text-teal-800 transition duration-150">
               &larr; Lanjut Berbelanja
             </Link>
           </div>
@@ -434,7 +467,7 @@ const CartPage = ({
               </div>
             )}
 
-            <div className={`${showItemsPanel ? "lg:col-span-1" : ""} bg-white p-6 rounded-xl shadow-lg h-fit sticky top-20`}>
+            <div className="checkout-main-card p-6 h-fit sticky top-24">
               <h2 className="text-2xl font-bold text-gray-800 mb-4 border-b pb-2">Ringkasan Pesanan</h2>
 
               <div className="mb-4 border rounded-lg p-3">
@@ -500,7 +533,6 @@ const CartPage = ({
                         <option key={slot} value={slot}>{slot}</option>
                       ))}
                     </select>
-                    <p className="text-xs text-gray-500 mt-1">Estimasi dihitung berdasarkan jarak outlet dan antrian.</p>
                   </div>
 
                   <div className="space-y-3 text-gray-600">
@@ -525,21 +557,14 @@ const CartPage = ({
                   </div>
                 </>
               )}
-              {!showAddressPanel && (
-                <div className="mb-3 text-sm text-slate-600 border rounded-lg p-3">
-                  <p className="font-semibold">Outlet</p>
-                  <p>{selectedOutlet ? selectedOutlet.nama : "Belum dipilih"}</p>
-                  <p className="font-semibold mt-2">Slot jemput</p>
-                  <p>{pickupSlot || "-"}</p>
-                </div>
-              )}
 
               <button
                 onClick={handleOpenCheckout}
-                className="w-full mt-6 bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition duration-200 shadow-md transform hover:scale-[1.01]">
+                className="checkout-btn-next w-full mt-6 justify-center">
                 {showAddressPanel ? (showPaymentCTA ? "Proses Pembayaran" : "Lanjut ke Layanan") : "Lanjut ke Pembayaran"}
+                <i className="fas fa-arrow-right"></i>
               </button>
-              <Link to="/" className="w-full mt-3 inline-block text-center text-blue-600 hover:text-blue-800 font-medium">
+              <Link to="/" className="w-full mt-3 inline-block text-center text-slate-600 hover:text-slate-800 font-medium">
                 &larr; Lanjut Belanja
               </Link>
             </div>

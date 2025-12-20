@@ -50,6 +50,8 @@ export const authApi = {
     request("/auth/signup", { method: "POST", body: { nama, email, password } }),
   login: (email, password) =>
     request("/auth/login", { method: "POST", body: { email, password } }),
+  googleLogin: (credential) =>
+    request("/auth/google", { method: "POST", body: { credential } }),
   me: (token) => request("/auth/me", { token }),
 };
 

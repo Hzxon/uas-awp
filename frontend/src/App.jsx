@@ -287,9 +287,10 @@ const App = () => {
           path="/admin"
           element={
             <ProtectedRoute isLoggedIn={isLoggedIn} onRequireAuth={requireLogin}>
-              {user?.role === "admin" ? (
+              {user?.role === "admin" || user?.role === "superadmin" ? (
                 <AdminPage
                   userName={user?.nama || ""}
+                  userRole={user?.role || "admin"}
                   onLogout={handleLogout}
                   authToken={authToken}
                 />

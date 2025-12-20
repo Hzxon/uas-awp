@@ -1,8 +1,8 @@
 const express = require("express");
-const { signup, login, me } = require("../controllers/authController");
+const { signup, login, me, googleLogin } = require("../controllers/authController");
 const { verifyToken } = require("../middleware/auth");
 const rateLimit = require("express-rate-limit");
-const router = require("express").Router(); 
+const router = require("express").Router();
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -14,9 +14,11 @@ const authLimiter = rateLimit({
 
 router.use("/login", authLimiter);
 router.use("/signup", authLimiter);
+router.use("/google", authLimiter);
 
 router.post("/signup", signup);
 router.post("/login", login);
+router.post("/google", googleLogin);
 router.get("/me", verifyToken, me);
 
 module.exports = router;

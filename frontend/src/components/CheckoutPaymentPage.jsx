@@ -102,7 +102,7 @@ const CheckoutPaymentPage = ({
   };
 
   return (
-    <div className="bg-blue-50 min-h-screen">
+    <div className="checkout-address-page">
       <Navbar
         cartCount={cartCount}
         cartItems={cartItems}
@@ -111,25 +111,24 @@ const CheckoutPaymentPage = ({
         onLogout={onLogout}
       />
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <p className="text-xs uppercase tracking-wide text-slate-500">Langkah 3 dari 3</p>
-            <h1 className="text-2xl font-bold text-slate-900">Proses Pembayaran</h1>
-          </div>
-          <button
-            className="text-sm text-blue-600 hover:text-blue-700"
-            onClick={() => navigate("/checkout/services")}
-          >
-            Kembali ke keranjang
-          </button>
+      <div className="checkout-address-container">
+        {/* Breadcrumb */}
+        <div className="checkout-breadcrumb">
+          <span className="step-badge">Step 3</span>
+          <span>Informasi Pickup</span>
+          <span className="step-arrow">→</span>
+          <span>Layanan</span>
+          <span className="step-arrow">→</span>
+          <span className="active-step">Pembayaran</span>
         </div>
+
+        <h1 className="text-2xl font-bold text-slate-900 mb-6">Proses Pembayaran</h1>
 
         {error && <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">{error}</div>}
 
         <div className="grid lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-4">
-            <div className="bg-white rounded-2xl shadow-md border border-slate-100 p-4">
+            <div className="checkout-main-card p-4">
               <h3 className="text-lg font-semibold text-slate-900 mb-3">Metode Pembayaran</h3>
               <select
                 value={paymentMethod}
@@ -140,10 +139,9 @@ const CheckoutPaymentPage = ({
                 <option value="ewallet">E-Wallet (Mock)</option>
                 <option value="credit-card">Kartu Kredit (Mock)</option>
               </select>
-              <p className="text-xs text-slate-500 mt-2">Pembayaran disimulasikan (mock). Status order akan otomatis jadi “paid”.</p>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-md border border-slate-100 p-4">
+            <div className="checkout-main-card p-4">
               <h3 className="text-lg font-semibold text-slate-900 mb-3">Ringkasan Alamat & Outlet</h3>
               <div className="text-sm text-slate-700 space-y-2">
                 <div className="border rounded-lg p-3">
@@ -169,7 +167,7 @@ const CheckoutPaymentPage = ({
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl shadow-md border border-slate-100 p-4 h-fit">
+          <div className="checkout-main-card p-4 h-fit">
             <h2 className="text-lg font-semibold text-slate-900 mb-3">Ringkasan Pembayaran</h2>
             <div className="space-y-2 text-sm text-slate-700">
               <div className="flex justify-between">
@@ -194,15 +192,17 @@ const CheckoutPaymentPage = ({
             <button
               onClick={handleConfirm}
               disabled={isSubmitting}
-              className="w-full mt-6 bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition disabled:opacity-60"
+              className="checkout-btn-next w-full mt-6 justify-center"
             >
               {isSubmitting ? "Memproses..." : "Konfirmasi & Bayar"}
+              <i className="fas fa-check"></i>
             </button>
             <button
               onClick={() => navigate("/checkout/services")}
-              className="w-full mt-3 bg-white border border-slate-200 text-slate-700 py-3 rounded-lg font-semibold hover:border-slate-300"
+              className="checkout-btn-back w-full mt-3 justify-center"
             >
-              Kembali ke keranjang
+              <i className="fas fa-arrow-left"></i>
+              Kembali ke Layanan
             </button>
           </div>
         </div>

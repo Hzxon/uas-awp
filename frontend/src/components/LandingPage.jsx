@@ -279,7 +279,7 @@ const LandingPage = ({
       <p className="text-xs text-gray-500 mt-2">Rp {svc.harga.toLocaleString('id-ID')}/kg</p>
 
       {/* Hover overlay with add button */}
-      <div className="absolute inset-0 bg-primary-500/90 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+      <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/95 to-teal-500/95 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
         <i className="fas fa-plus-circle text-4xl text-white mb-2"></i>
         <span className="text-white font-bold text-sm">Tambah Layanan</span>
       </div>
@@ -312,7 +312,7 @@ const LandingPage = ({
       <p className="text-xs text-gray-500 mt-2">Rp {prod.harga.toLocaleString('id-ID')}/pcs</p>
 
       {/* Hover overlay with add button */}
-      <div className="absolute inset-0 bg-purple-500/90 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+      <div className="absolute inset-0 bg-gradient-to-br from-orange-400/95 to-amber-500/95 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
         <i className="fas fa-cart-plus text-4xl text-white mb-2"></i>
         <span className="text-white font-bold text-sm">Tambah Produk</span>
       </div>

@@ -23,8 +23,7 @@ const AddressFormPanel = ({
             <i className="fas fa-location-dot"></i>
           </span>
           <div>
-            <p className="text-xs uppercase tracking-wide text-orange-600 font-semibold">Informasi Penjemputan</p>
-            <p className="text-sm text-slate-700">Pilih atau tambahkan alamat pickup</p>
+            <p className="text-sm font-semibold text-slate-800">Informasi Penjemputan</p>
           </div>
         </div>
       </div>
@@ -34,9 +33,19 @@ const AddressFormPanel = ({
           <h3 className="text-lg font-semibold text-slate-900">Alamat Pickup</h3>
           <button
             onClick={onCancel}
-            className="text-sm text-blue-600 hover:text-blue-700 font-semibold"
+            className={isAdding
+              ? "text-sm text-slate-600 hover:text-slate-800 font-medium"
+              : "inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-orange-500 to-orange-400 rounded-full hover:from-orange-600 hover:to-orange-500 shadow-md hover:shadow-lg transition-all"
+            }
           >
-            {isAdding ? "Pilih alamat tersimpan" : "Tambah alamat baru"}
+            {isAdding ? (
+              "← Pilih alamat tersimpan"
+            ) : (
+              <>
+                <i className="fas fa-plus"></i>
+                Tambah alamat baru
+              </>
+            )}
           </button>
         </div>
 
@@ -50,9 +59,8 @@ const AddressFormPanel = ({
               {addresses.map((addr) => (
                 <label
                   key={addr.id}
-                  className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition ${
-                    selectedAddressId === addr.id ? "border-blue-400 bg-blue-50" : "border-slate-200 hover:border-blue-200"
-                  }`}
+                  className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition ${selectedAddressId === addr.id ? "border-blue-400 bg-blue-50" : "border-slate-200 hover:border-blue-200"
+                    }`}
                 >
                   <input
                     type="radio"
@@ -79,11 +87,10 @@ const AddressFormPanel = ({
                   key={cat}
                   type="button"
                   onClick={() => setAddressForm((p) => ({ ...p, label: cat }))}
-                  className={`px-4 py-2 rounded-full border text-sm ${
-                    addressForm.label === cat
-                      ? "bg-orange-500 text-white border-orange-500"
-                      : "border-slate-200 text-slate-600 hover:border-orange-300"
-                  }`}
+                  className={`px-4 py-2 rounded-full border text-sm ${addressForm.label === cat
+                    ? "bg-orange-500 text-white border-orange-500"
+                    : "border-slate-200 text-slate-600 hover:border-orange-300"
+                    }`}
                 >
                   {cat}
                 </button>
@@ -130,11 +137,10 @@ const AddressFormPanel = ({
                 {contactTypes.map((type) => (
                   <span
                     key={type}
-                    className={`px-4 py-2 rounded-full border text-sm ${
-                      addressForm.contact_type === type
-                        ? "bg-orange-500 text-white border-orange-500"
-                        : "border-slate-200 text-slate-600"
-                    }`}
+                    className={`px-4 py-2 rounded-full border text-sm ${addressForm.contact_type === type
+                      ? "bg-orange-500 text-white border-orange-500"
+                      : "border-slate-200 text-slate-600"
+                      }`}
                   >
                     {type}
                   </span>

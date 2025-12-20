@@ -23,13 +23,15 @@ const requireRole = (...allowedRoles) => {
     };
 };
 
-const requireAdmin = requireRole('admin');
-const requirePartner = requireRole('partner', 'admin');
-const requireCustomer = requireRole('customer', 'partner', 'admin');
+const requireAdmin = requireRole('admin', 'superadmin');
+const requireSuperAdmin = requireRole('superadmin');
+const requirePartner = requireRole('partner', 'admin', 'superadmin');
+const requireCustomer = requireRole('customer', 'partner', 'admin', 'superadmin');
 
 module.exports = {
     requireRole,
     requireAdmin,
+    requireSuperAdmin,
     requirePartner,
     requireCustomer
 };

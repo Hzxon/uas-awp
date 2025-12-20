@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { adminPartnerApi } from '../../api';
 
-const AdminPartnerApproval = ({ token }) => {
+const AdminPartnerApproval = ({ token, userRole }) => {
     const [partners, setPartners] = useState([]);
     const [loading, setLoading] = useState(true);
     const [statusFilter, setStatusFilter] = useState('pending');
@@ -102,8 +102,8 @@ const AdminPartnerApproval = ({ token }) => {
                             key={status}
                             onClick={() => setStatusFilter(status)}
                             className={`px-4 py-2 rounded-lg font-medium text-sm capitalize ${statusFilter === status
-                                    ? 'bg-pink-500 text-white'
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                ? 'bg-pink-500 text-white'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                 }`}
                         >
                             {status === 'all' ? 'Semua' : status}
@@ -154,45 +154,47 @@ const AdminPartnerApproval = ({ token }) => {
                                 </div>
                             </div>
 
-                            {/* Action Buttons */}
-                            <div className="flex gap-2 mt-4 pt-4 border-t border-gray-100">
-                                {partner.status === 'pending' && (
-                                    <>
+                            {/* Action Buttons - Only for SuperAdmin */}
+                            {userRole === 'superadmin' && (
+                                <div className="flex gap-2 mt-4 pt-4 border-t border-gray-100">
+                                    {partner.status === 'pending' && (
+                                        <>
+                                            <button
+                                                onClick={() => handleApprove(partner.id)}
+                                                disabled={processingId === partner.id}
+                                                className="px-4 py-2 bg-green-500 text-white rounded-lg font-medium text-sm hover:bg-green-600 disabled:opacity-50"
+                                            >
+                                                {processingId === partner.id ? <i className="fas fa-spinner fa-spin"></i> : <><i className="fas fa-check mr-1"></i>Setujui</>}
+                                            </button>
+                                            <button
+                                                onClick={() => handleReject(partner.id)}
+                                                disabled={processingId === partner.id}
+                                                className="px-4 py-2 bg-red-500 text-white rounded-lg font-medium text-sm hover:bg-red-600 disabled:opacity-50"
+                                            >
+                                                <i className="fas fa-times mr-1"></i>Tolak
+                                            </button>
+                                        </>
+                                    )}
+                                    {partner.status === 'approved' && (
                                         <button
-                                            onClick={() => handleApprove(partner.id)}
+                                            onClick={() => handleSuspend(partner.id)}
                                             disabled={processingId === partner.id}
-                                            className="px-4 py-2 bg-green-500 text-white rounded-lg font-medium text-sm hover:bg-green-600 disabled:opacity-50"
+                                            className="px-4 py-2 bg-yellow-500 text-white rounded-lg font-medium text-sm hover:bg-yellow-600 disabled:opacity-50"
                                         >
-                                            {processingId === partner.id ? <i className="fas fa-spinner fa-spin"></i> : <><i className="fas fa-check mr-1"></i>Setujui</>}
+                                            <i className="fas fa-pause mr-1"></i>Tangguhkan
                                         </button>
+                                    )}
+                                    {partner.status === 'suspended' && (
                                         <button
-                                            onClick={() => handleReject(partner.id)}
+                                            onClick={() => handleReactivate(partner.id)}
                                             disabled={processingId === partner.id}
-                                            className="px-4 py-2 bg-red-500 text-white rounded-lg font-medium text-sm hover:bg-red-600 disabled:opacity-50"
+                                            className="px-4 py-2 bg-blue-500 text-white rounded-lg font-medium text-sm hover:bg-blue-600 disabled:opacity-50"
                                         >
-                                            <i className="fas fa-times mr-1"></i>Tolak
+                                            <i className="fas fa-play mr-1"></i>Aktifkan Kembali
                                         </button>
-                                    </>
-                                )}
-                                {partner.status === 'approved' && (
-                                    <button
-                                        onClick={() => handleSuspend(partner.id)}
-                                        disabled={processingId === partner.id}
-                                        className="px-4 py-2 bg-yellow-500 text-white rounded-lg font-medium text-sm hover:bg-yellow-600 disabled:opacity-50"
-                                    >
-                                        <i className="fas fa-pause mr-1"></i>Tangguhkan
-                                    </button>
-                                )}
-                                {partner.status === 'suspended' && (
-                                    <button
-                                        onClick={() => handleReactivate(partner.id)}
-                                        disabled={processingId === partner.id}
-                                        className="px-4 py-2 bg-blue-500 text-white rounded-lg font-medium text-sm hover:bg-blue-600 disabled:opacity-50"
-                                    >
-                                        <i className="fas fa-play mr-1"></i>Aktifkan Kembali
-                                    </button>
-                                )}
-                            </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     ))}
                 </div>

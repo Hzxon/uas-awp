@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import { orderApi, API_BASE_URL } from "../api";
+import Navbar from "./Navbar";
+import Footer from "./Footer";
 
-const PaymentSuccess = ({ authToken }) => {
+const PaymentSuccess = ({ authToken, cartCount = 0, cartItems = [], userName = "", onLogout }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const query = new URLSearchParams(location.search);
@@ -54,152 +56,197 @@ const PaymentSuccess = ({ authToken }) => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-slate-700">
-        Memuat ringkasan pembayaran...
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center text-red-600">
-        <p className="mb-4 font-semibold">Terjadi kesalahan</p>
-        <p className="text-sm text-slate-600">{error}</p>
-        <Link to="/" className="mt-6 text-blue-600 font-semibold">
-          Kembali ke beranda
-        </Link>
-      </div>
-    );
-  }
-
   const statusFlow = [
-    "pickup_scheduled",
-    "picked_up",
-    "washing",
-    "drying",
-    "delivering",
-    "delivered",
+    { key: "pickup_scheduled", label: "Pickup Dijadwalkan", icon: "fas fa-calendar-check" },
+    { key: "picked_up", label: "Sudah Di-pickup", icon: "fas fa-truck-pickup" },
+    { key: "washing", label: "Sedang Dicuci", icon: "fas fa-soap" },
+    { key: "drying", label: "Pengeringan", icon: "fas fa-wind" },
+    { key: "delivering", label: "Sedang Diantar", icon: "fas fa-shipping-fast" },
+    { key: "delivered", label: "Selesai", icon: "fas fa-check-circle" },
   ];
-
-  const statusLabel = (s) => {
-    switch (s) {
-      case "pickup_scheduled":
-        return "Pickup dijadwalkan";
-      case "picked_up":
-        return "Sudah di-pickup";
-      case "washing":
-        return "Sedang dicuci";
-      case "drying":
-        return "Pengeringan";
-      case "delivering":
-        return "Sedang diantar";
-      case "delivered":
-        return "Selesai";
-      default:
-        return s || "-";
-    }
-  };
 
   const timelineMap = timeline.reduce((acc, item) => {
     acc[item.status] = item;
     return acc;
   }, {});
 
+  // Find current step index
+  const currentStepIndex = statusFlow.findIndex(step => step.key === order?.status);
+
+  if (loading) {
+    return (
+      <div className="checkout-address-page">
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="loading-spinner mx-auto mb-4"></div>
+            <p className="text-slate-600">Memuat ringkasan pembayaran...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="checkout-address-page">
+        <div className="min-h-screen flex flex-col items-center justify-center">
+          <div className="checkout-main-card p-8 text-center max-w-md">
+            <div className="h-16 w-16 rounded-full bg-red-100 text-red-500 flex items-center justify-center mx-auto mb-4">
+              <i className="fas fa-exclamation-circle text-2xl"></i>
+            </div>
+            <p className="text-lg font-semibold text-slate-800 mb-2">Terjadi Kesalahan</p>
+            <p className="text-sm text-slate-600 mb-6">{error}</p>
+            <Link to="/" className="checkout-btn-next inline-flex">
+              <i className="fas fa-home"></i>
+              Kembali ke Beranda
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4 py-10">
-      <div className="bg-white rounded-2xl shadow-xl border border-slate-100 max-w-2xl w-full p-8 space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs uppercase tracking-wide text-green-600 font-semibold">Pembayaran berhasil</p>
-            <h1 className="text-3xl font-bold text-slate-900 mt-1">Order #{order?.id}</h1>
-          </div>
-          <div className="h-12 w-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
-            <i className="fas fa-check text-xl"></i>
+    <div className="checkout-address-page">
+      <Navbar
+        cartCount={cartCount}
+        cartItems={cartItems}
+        isLoggedIn={Boolean(authToken)}
+        userName={userName}
+        onLogout={onLogout}
+      />
+
+      <div className="checkout-address-container max-w-3xl mx-auto">
+        {/* Success Header */}
+        <div className="checkout-main-card mb-6 overflow-hidden">
+          <div className="bg-gradient-to-r from-green-500 to-emerald-400 p-6 text-white text-center">
+            <div className="h-20 w-20 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mx-auto mb-4 animate-bounce">
+              <i className="fas fa-check text-4xl text-white"></i>
+            </div>
+            <h1 className="text-2xl font-bold mb-1">Pembayaran Berhasil!</h1>
+            <p className="text-green-50">Order #{order?.id} telah dikonfirmasi</p>
+            <p className="text-lg font-bold mt-2">Rp {Number(order?.total_pembayaran || 0).toLocaleString("id-ID")}</p>
           </div>
         </div>
 
-        <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 space-y-2">
-          <div className="flex justify-between text-sm text-slate-700">
-            <span>Status</span>
-            <span className="font-semibold text-green-600">{statusLabel(order?.status)}</span>
-          </div>
-          <div className="flex justify-between text-sm text-slate-700">
-            <span>Total</span>
-            <span className="font-semibold">Rp {Number(order?.total_pembayaran || 0).toLocaleString("id-ID")}</span>
-          </div>
-          <div className="flex justify-between text-sm text-slate-700">
-            <span>Tanggal</span>
-            <span className="font-medium">
-              {order?.tanggal ? new Date(order.tanggal).toLocaleString("id-ID") : "-"}
-            </span>
-          </div>
-        </div>
+        {/* Status Timeline */}
+        <div className="checkout-main-card p-5 mb-6">
+          <h2 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+            <i className="fas fa-tasks text-teal-500"></i>
+            Status Pesanan
+          </h2>
 
-        <div>
-          <p className="text-sm font-semibold text-slate-800 mb-3">Status order</p>
-          <div className="space-y-3">
-            {statusFlow.map((step) => {
-              const log = timelineMap[step];
+          {/* Visual Timeline */}
+          <div className="relative">
+            {statusFlow.map((step, index) => {
+              const log = timelineMap[step.key];
               const isDone = Boolean(log);
+              const isCurrent = step.key === order?.status || (order?.status === "paid" && index === 0);
+              const isPending = !isDone && !isCurrent;
+
               return (
-                <div key={step} className="flex items-start gap-3">
+                <div key={step.key} className="relative flex gap-4 pb-8 last:pb-0">
+                  {/* Connector Line */}
+                  {index < statusFlow.length - 1 && (
+                    <div
+                      className={`absolute left-6 top-12 w-0.5 h-full -ml-px ${isDone ? "bg-green-400" : "bg-slate-200"
+                        }`}
+                    ></div>
+                  )}
+
+                  {/* Status Icon */}
                   <div
-                    className={`h-8 w-8 rounded-full border flex items-center justify-center ${
-                      isDone ? "bg-emerald-100 border-emerald-200 text-emerald-700" : "bg-slate-100 border-slate-200 text-slate-400"
-                    }`}
+                    className={`relative z-10 h-12 w-12 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300 ${isDone
+                      ? "bg-gradient-to-br from-green-400 to-emerald-500 text-white shadow-lg shadow-green-200"
+                      : isCurrent
+                        ? "bg-gradient-to-br from-orange-400 to-orange-500 text-white shadow-lg shadow-orange-200 animate-pulse"
+                        : "bg-slate-100 text-slate-400 border-2 border-slate-200"
+                      }`}
                   >
-                    {isDone ? "Y" : "-"}
+                    <i className={`${step.icon} ${isDone || isCurrent ? "text-lg" : "text-base"}`}></i>
                   </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-slate-900">{statusLabel(step)}</p>
-                    <p className="text-xs text-slate-500">
+
+                  {/* Status Content */}
+                  <div className="flex-1 pt-1">
+                    <div className="flex items-center gap-3 mb-1">
+                      <h3
+                        className={`font-semibold ${isDone ? "text-green-700" : isCurrent ? "text-orange-600" : "text-slate-400"
+                          }`}
+                      >
+                        {step.label}
+                      </h3>
+                      {isDone && (
+                        <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-600">
+                          Selesai
+                        </span>
+                      )}
+                      {isCurrent && !isDone && (
+                        <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-600">
+                          Saat Ini
+                        </span>
+                      )}
+                    </div>
+                    <p className={`text-sm ${isDone ? "text-slate-600" : "text-slate-400"}`}>
                       {log?.created_at
-                        ? new Date(log.created_at).toLocaleString("id-ID")
-                        : "Menunggu diproses"}
+                        ? new Date(log.created_at).toLocaleString("id-ID", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit"
+                        })
+                        : isPending
+                          ? "Menunggu proses sebelumnya"
+                          : "Segera diproses"}
                     </p>
-                    {log?.note && <p className="text-xs text-slate-600">Catatan: {log.note}</p>}
+                    {log?.note && (
+                      <p className="text-xs text-slate-500 mt-1 italic">
+                        <i className="fas fa-sticky-note mr-1"></i>
+                        {log.note}
+                      </p>
+                    )}
                   </div>
                 </div>
               );
             })}
-            {timeline.length === 0 && (
-              <p className="text-sm text-slate-500">Timeline belum tersedia.</p>
-            )}
           </div>
+
+          {timeline.length === 0 && (
+            <div className="text-center py-8 bg-slate-50 rounded-xl mt-4">
+              <i className="fas fa-clock text-4xl text-slate-300 mb-3"></i>
+              <p className="text-slate-500">Pesanan Anda sedang diproses</p>
+              <p className="text-sm text-slate-400 mt-1">Timeline akan diperbarui secara otomatis</p>
+            </div>
+          )}
         </div>
 
-        <div>
-          <p className="text-sm font-semibold text-slate-800 mb-2">Alamat penjemputan</p>
-          <div className="border border-slate-200 rounded-xl p-3 text-sm text-slate-700 bg-slate-50">
-            <p className="font-semibold">{order?.nama_penerima || "-"}</p>
-            <p>{order?.alamat || "-"}</p>
-            {order?.phone && <p className="text-slate-500">Telp: {order.phone}</p>}
-          </div>
-        </div>
-
-        <div className="flex gap-3">
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-3">
           <button
             onClick={handleDownloadInvoice}
-            className="flex-1 bg-slate-900 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition shadow-sm"
+            className="checkout-btn-next flex-1 justify-center"
           >
+            <i className="fas fa-file-pdf"></i>
             Unduh Invoice (PDF)
           </button>
           <Link
             to="/orders/status"
-            className="flex-1 text-center bg-white border border-slate-200 py-3 rounded-xl font-semibold text-slate-800 hover:border-blue-300 transition"
+            className="checkout-btn-back flex-1 justify-center flex items-center gap-2"
           >
-            Lihat status
+            <i className="fas fa-list-alt"></i>
+            Lihat Semua Pesanan
           </Link>
           <Link
             to="/"
-            className="flex-1 text-center bg-white border border-slate-200 py-3 rounded-xl font-semibold text-slate-800 hover:border-blue-300 transition"
+            className="checkout-btn-back flex-1 justify-center flex items-center gap-2"
           >
+            <i className="fas fa-home"></i>
             Kembali ke Beranda
           </Link>
         </div>
       </div>
+
+      <Footer />
     </div>
   );
 };
