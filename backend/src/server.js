@@ -23,10 +23,17 @@ const reviewRoutes = require("./routes/reviewRoutes");
 const PORT = process.env.PORT || 5001;
 const app = express();
 
-// --- CONFIG CORS FINAL (YANG TERBUKTI BERHASIL) ---
+// --- CONFIG CORS (Dev + Production) ---
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "http://localhost:4173",
+  process.env.FRONTEND_URL, // Production frontend URL
+].filter(Boolean); // Remove undefined values
+
 app.use(cors({
-  origin: ["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:4173"], // Whitelist frontend
-  credentials: true, // Wajib agar cookie/session jalan
+  origin: allowedOrigins,
+  credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
