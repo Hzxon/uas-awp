@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../../api';
 
 const AdminAnalytics = ({ token }) => {
     const [loading, setLoading] = useState(true);
@@ -9,8 +10,9 @@ const AdminAnalytics = ({ token }) => {
         const fetchData = async () => {
             try {
                 // Fetch overview
-                const overviewRes = await fetch('http://localhost:5001/api/admin/analytics/overview', {
-                    headers: { Authorization: `Bearer ${token}` }
+                const overviewRes = await fetch(`${API_BASE_URL}/admin/analytics/overview`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                    credentials: 'include',
                 });
                 const overviewData = await overviewRes.json();
                 if (overviewData.success) {
@@ -18,8 +20,9 @@ const AdminAnalytics = ({ token }) => {
                 }
 
                 // Fetch activities
-                const activitiesRes = await fetch('http://localhost:5001/api/admin/analytics/activities', {
-                    headers: { Authorization: `Bearer ${token}` }
+                const activitiesRes = await fetch(`${API_BASE_URL}/admin/analytics/activities`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                    credentials: 'include',
                 });
                 const activitiesData = await activitiesRes.json();
                 if (activitiesData.success) {

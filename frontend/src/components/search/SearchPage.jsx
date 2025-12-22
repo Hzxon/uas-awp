@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import Navbar from '../Navbar';
 import Footer from '../Footer';
+import { API_BASE_URL } from '../../api';
 
 const SearchPage = (props) => {
     const {
@@ -42,7 +43,9 @@ const SearchPage = (props) => {
                 if (sortBy) params.set('sort_by', sortBy);
 
                 const queryString = params.toString();
-                const res = await fetch(`http://localhost:5001/api/outlets/search${queryString ? `?${queryString}` : ''}`);
+                const res = await fetch(`${API_BASE_URL}/outlets/search${queryString ? `?${queryString}` : ''}`, {
+                    credentials: 'include',
+                });
                 const data = await res.json();
 
                 if (data.success) {
@@ -225,4 +228,3 @@ const SearchPage = (props) => {
 };
 
 export default SearchPage;
-
