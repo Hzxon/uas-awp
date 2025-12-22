@@ -11,6 +11,7 @@ const AddressFormPanel = ({
   setAddressForm,
   onSubmit,
   onCancel,
+  onAdd = () => {},
   isAdding,
   isLoading,
   onEdit,
@@ -87,7 +88,7 @@ const AddressFormPanel = ({
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold text-slate-900">Alamat Pickup</h3>
           <button
-            onClick={onCancel}
+            onClick={(isAdding || isEditing) ? onCancel : onAdd}
             className={(isAdding || isEditing)
               ? "text-sm text-slate-600 hover:text-slate-800 font-medium"
               : "inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-orange-500 to-orange-400 rounded-full hover:from-orange-600 hover:to-orange-500 shadow-md hover:shadow-lg transition-all"

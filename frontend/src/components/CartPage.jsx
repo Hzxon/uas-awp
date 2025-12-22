@@ -248,6 +248,22 @@ const CartPage = ({
     });
   };
 
+  const handleStartAddAddress = () => {
+    setIsAddingAddress(true);
+    setIsEditingAddress(false);
+    setEditingAddressId(null);
+    setAddressForm({
+      label: "Rumah",
+      nama_penerima: userName || "",
+      phone: "",
+      alamat: "",
+      catatan: "",
+      is_default: true,
+      lat: "",
+      lng: "",
+    });
+  };
+
   // --- BAGIAN UTAMA YANG DIPERBAIKI ---
   const handleConfirmOrder = async () => {
     if (!authToken) {
@@ -412,6 +428,7 @@ const CartPage = ({
                   setAddressForm={setAddressForm}
                   onSubmit={handleAddAddress}
                   onCancel={handleCancelAddressForm}
+                  onAdd={handleStartAddAddress}
                   isAdding={isAddingAddress}
                   isEditing={isEditingAddress}
                   isLoading={isAddrLoading}
@@ -561,6 +578,7 @@ const CartPage = ({
                   setAddressForm={setAddressForm}
                   onSubmit={handleAddAddress}
                   onCancel={handleCancelAddressForm}
+                  onAdd={handleStartAddAddress}
                   isAdding={isAddingAddress}
                   isEditing={isEditingAddress}
                   isLoading={isAddrLoading}
