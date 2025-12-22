@@ -13,6 +13,7 @@ import OrderStatusPage from "./components/OrderStatusPage";
 import PartnerRegistration from "./components/partner/PartnerRegistration";
 import PartnerDashboard from "./components/partner/PartnerDashboard";
 import PartnerOrders from "./components/partner/PartnerOrders";
+import PartnerItemsPage from "./components/partner/PartnerItemsPage";
 import SearchPage from "./components/search/SearchPage";
 import OutletDetailPage from "./components/search/OutletDetailPage";
 
@@ -352,6 +353,19 @@ const App = () => {
             <ProtectedRoute isLoggedIn={isLoggedIn} onRequireAuth={requireLogin}>
               {user?.role === "partner" || user?.role === "admin" ? (
                 <PartnerOrders token={authToken} />
+              ) : (
+                <Navigate to="/partner/register" replace />
+              )}
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/partner/items"
+          element={
+            <ProtectedRoute isLoggedIn={isLoggedIn} onRequireAuth={requireLogin}>
+              {user?.role === "partner" || user?.role === "admin" ? (
+                <PartnerItemsPage token={authToken} />
               ) : (
                 <Navigate to="/partner/register" replace />
               )}

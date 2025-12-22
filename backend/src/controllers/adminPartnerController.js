@@ -1,4 +1,5 @@
 const pool = require("../config/db");
+const bcrypt = require("bcrypt");
 
 /**
  * Admin Partner Controller
@@ -268,6 +269,116 @@ exports.reactivatePartner = async (req, res) => {
         return res.status(500).json({
             success: false,
             message: "Gagal mengaktifkan partner"
+        });
+    } finally {
+        connection.release();
+    }
+};
+
+// Create new partner directly (superadmin only)
+exports.createPartner = async (req, res) => {
+    const connection = await pool.getConnection();
+    try {
+        await connection.beginTransaction();
+
+        const adminId = req.user.id;
+        const {
+            nama,
+            email,
+            password,
+            business_name,
+            business_license,
+            bank_name,
+            bank_account,
+            bank_holder,
+            outlet_name,
+            outlet_address,
+            outlet_phone,
+            outlet_description,
+            lat,
+            lng
+        } = req.body;
+
+        // Validation
+        if (!nama || !email || !password || !business_name || !outlet_name || !outlet_address) {
+            return res.status(400).json({
+                success: false,
+                message: "Nama, email, password, nama bisnis, nama outlet, dan alamat outlet wajib diisi"
+            });
+        }
+
+        // Check if email already exists
+        const [existingUser] = await connection.query(
+            "SELECT id FROM users WHERE email = ?",
+            [email.toLowerCase().trim()]
+        );
+
+        if (existingUser.length > 0) {
+            return res.status(400).json({
+                success: false,
+                message: "Email sudah terdaftar"
+            });
+        }
+
+        // Hash password
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // Create user with admin role (partners get admin role)
+        const [userResult] = await connection.query(
+            `INSERT INTO users (nama, email, password, role) 
+             VALUES (?, ?, ?, 'admin')`,
+            [nama, email.toLowerCase().trim(), hashedPassword]
+        );
+
+        const userId = userResult.insertId;
+
+        // Create outlet for the partner (active from start)
+        const [outletResult] = await connection.query(
+            `INSERT INTO outlets (nama, alamat, lat, lng, phone, description, owner_id, is_active, created_at) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, 1, NOW())`,
+            [
+                outlet_name,
+                outlet_address,
+                lat || 0,
+                lng || 0,
+                outlet_phone || "",
+                outlet_description || "",
+                userId
+            ]
+        );
+
+        const outletId = outletResult.insertId;
+
+        // Create partner profile with approved status
+        await connection.query(
+            `INSERT INTO partner_profiles 
+             (user_id, outlet_id, business_name, business_license, bank_name, bank_account, bank_holder, status, approved_at, approved_by, created_at) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, 'approved', NOW(), ?, NOW())`,
+            [
+                userId,
+                outletId,
+                business_name,
+                business_license || "",
+                bank_name || "",
+                bank_account || "",
+                bank_holder || "",
+                adminId
+            ]
+        );
+
+        await connection.commit();
+
+        return res.status(201).json({
+            success: true,
+            message: "Partner berhasil dibuat dan diaktifkan"
+        });
+
+    } catch (err) {
+        await connection.rollback();
+        console.error("createPartner error:", err);
+        return res.status(500).json({
+            success: false,
+            message: "Gagal membuat partner"
         });
     } finally {
         connection.release();

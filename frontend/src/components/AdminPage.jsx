@@ -284,16 +284,18 @@ const AdminPage = ({ userName, userRole, onLogout, authToken }) => {
                 <span>Analytics</span>
               </button>
 
-              <button
-                onClick={() => setActiveTab("partners")}
-                className={`flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition-all ${activeTab === "partners"
-                  ? "bg-white/70 backdrop-blur-sm text-purple-700 border border-purple-300 shadow-md"
-                  : "text-slate-700 hover:bg-white/40 hover:text-slate-900"
-                  }`}
-              >
-                <i className={`fas fa-store text-lg ${activeTab === "partners" ? "text-purple-500" : "text-slate-500"}`}></i>
-                <span>Partner</span>
-              </button>
+              {userRole === "superadmin" && (
+                <button
+                  onClick={() => setActiveTab("partners")}
+                  className={`flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition-all ${activeTab === "partners"
+                    ? "bg-white/70 backdrop-blur-sm text-purple-700 border border-purple-300 shadow-md"
+                    : "text-slate-700 hover:bg-white/40 hover:text-slate-900"
+                    }`}
+                >
+                  <i className={`fas fa-store text-lg ${activeTab === "partners" ? "text-purple-500" : "text-slate-500"}`}></i>
+                  <span>Partner</span>
+                </button>
+              )}
 
               <button
                 onClick={() => setActiveTab("layanan")}

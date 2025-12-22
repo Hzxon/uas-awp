@@ -104,12 +104,9 @@ exports.getById = async (req, res) => {
   try {
     const id = req.params.id;
 
+    // Simple query without subqueries that might fail
     const [outlets] = await pool.query(
-      `SELECT o.*, 
-              (SELECT COUNT(*) FROM reviews WHERE outlet_id = o.id) as review_count,
-              (SELECT AVG(rating) FROM reviews WHERE outlet_id = o.id) as avg_rating
-       FROM outlets o 
-       WHERE o.id = ? AND o.is_active = 1`,
+      `SELECT * FROM outlets WHERE id = ? AND is_active = 1`,
       [id]
     );
 
@@ -117,26 +114,86 @@ exports.getById = async (req, res) => {
       return res.status(404).json({ success: false, message: "Outlet tidak ditemukan" });
     }
 
-    // Get services for this outlet (from layanan table)
-    const [services] = await pool.query(
-      "SELECT * FROM layanan WHERE is_active = 1 ORDER BY harga ASC"
-    );
+    const outlet = outlets[0];
+
+    // Try to get review stats (may fail if table doesn't exist)
+    try {
+      const [reviewStats] = await pool.query(
+        `SELECT COUNT(*) as review_count, AVG(rating) as avg_rating FROM reviews WHERE outlet_id = ?`,
+        [id]
+      );
+      if (reviewStats[0]) {
+        outlet.review_count = reviewStats[0].review_count || 0;
+        outlet.avg_rating = reviewStats[0].avg_rating || 0;
+      }
+    } catch (e) {
+      outlet.review_count = 0;
+      outlet.avg_rating = 0;
+    }
+
+    let services = [];
+    let products = [];
+
+    // Try to get outlet-specific items first
+    try {
+      const [outletServices] = await pool.query(
+        "SELECT id, name as nama, price as harga, unit, description as deskripsi FROM outlet_items WHERE outlet_id = ? AND type = 'Layanan' AND is_active = 1 ORDER BY price ASC",
+        [id]
+      );
+      const [outletProducts] = await pool.query(
+        "SELECT id, name as nama, price as harga, unit, description as deskripsi FROM outlet_items WHERE outlet_id = ? AND type = 'Produk' AND is_active = 1 ORDER BY price ASC",
+        [id]
+      );
+
+      if (outletServices.length > 0) services = outletServices;
+      if (outletProducts.length > 0) products = outletProducts;
+    } catch (err) {
+      console.log("outlet_items query failed:", err.message);
+    }
+
+    // Fallback to global layanan/produk tables if no outlet-specific items
+    if (services.length === 0) {
+      try {
+        const [globalServices] = await pool.query(
+          "SELECT id, nama, harga, 'kg' as unit, deskripsi FROM layanan ORDER BY harga ASC"
+        );
+        services = globalServices;
+      } catch (e) {
+        console.log("layanan query failed:", e.message);
+      }
+    }
+
+    if (products.length === 0) {
+      try {
+        const [globalProducts] = await pool.query(
+          "SELECT id, nama, harga, 'pcs' as unit, deskripsi FROM produk ORDER BY harga ASC"
+        );
+        products = globalProducts;
+      } catch (e) {
+        console.log("produk query failed:", e.message);
+      }
+    }
 
     // Get recent reviews
-    const [reviews] = await pool.query(
-      `SELECT r.*, u.nama as user_name 
-       FROM reviews r 
-       LEFT JOIN users u ON r.user_id = u.id 
-       WHERE r.outlet_id = ? 
-       ORDER BY r.created_at DESC 
-       LIMIT 5`,
-      [id]
-    );
+    let reviews = [];
+    try {
+      const [recentReviews] = await pool.query(
+        `SELECT r.*, u.nama as user_name 
+         FROM reviews r 
+         LEFT JOIN users u ON r.user_id = u.id 
+         WHERE r.outlet_id = ? 
+         ORDER BY r.created_at DESC 
+         LIMIT 5`,
+        [id]
+      );
+      reviews = recentReviews;
+    } catch (e) { }
 
     return res.json({
       success: true,
-      outlet: outlets[0],
+      outlet: outlet,
       services: services,
+      products: products,
       reviews: reviews
     });
   } catch (err) {

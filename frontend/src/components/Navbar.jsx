@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import MiniCartPreview from './MiniCartPreview';
 
 const Navbar = ({ cartCount, cartItems = [], isLoggedIn, onLogout, onScroll, activeSection, userName, openModal, onNavigating, userRole }) => {
@@ -15,7 +15,9 @@ const Navbar = ({ cartCount, cartItems = [], isLoggedIn, onLogout, onScroll, act
     const [isVisible, setIsVisible] = useState(true);
     const [lastScrollY, setLastScrollY] = useState(0);
 
-    const isAdmin = userRole === "admin";
+    const isAdmin = userRole === "admin" || userRole === "superadmin";
+    const navigate = useNavigate();
+    const location = useLocation();
 
     // Effect untuk menerapkan dark mode
     useEffect(() => {
@@ -60,6 +62,17 @@ const Navbar = ({ cartCount, cartItems = [], isLoggedIn, onLogout, onScroll, act
 
         if (onScroll) {
             onScroll(id);
+        } else {
+            // If not on main page, navigate to home with hash
+            if (location.pathname !== '/') {
+                navigate(`/#${id}`);
+            } else {
+                // If on main page but no onScroll, try to scroll directly
+                const element = document.getElementById(id);
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth' });
+                }
+            }
         }
     };
 
@@ -103,7 +116,7 @@ const Navbar = ({ cartCount, cartItems = [], isLoggedIn, onLogout, onScroll, act
                     <button onClick={() => handleNavClick('layanan-lengkap')} className={getNavClass('layanan-lengkap')}>Layanan</button>
                     <button onClick={() => handleNavClick('produk-lengkap')} className={getNavClass('produk-lengkap')}>Produk</button>
                     <Link to="/search" className="nav-link">Cari Outlet</Link>
-                    <Link to="/orders/status" className="nav-link">Status</Link>
+                    {!isAdmin && <Link to="/orders/status" className="nav-link">Status</Link>}
                 </div>
 
                 {/* Right Side Actions */}

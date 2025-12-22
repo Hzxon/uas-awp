@@ -125,6 +125,7 @@ export const adminPartnerApi = {
     return request(`/admin/partners${queryString}`, { token });
   },
   get: (token, id) => request(`/admin/partners/${id}`, { token }),
+  create: (token, data) => request("/admin/partners", { method: "POST", token, body: data }),
   approve: (token, id) => request(`/admin/partners/${id}/approve`, { method: "POST", token }),
   reject: (token, id, reason = "") =>
     request(`/admin/partners/${id}/reject`, { method: "POST", token, body: { reason } }),
@@ -145,5 +146,13 @@ export const reviewApi = {
     request(`/reviews/${reviewId}/reply`, { method: "POST", token, body: { reply } }),
 };
 
-export { API_BASE_URL };
+// Outlet Items API - for per-outlet services and products
+export const outletItemApi = {
+  listByOutlet: (outletId) => request(`/outlet-items/outlet/${outletId}`),
+  listOwn: (token) => request("/outlet-items/my", { token }),
+  create: (token, data) => request("/outlet-items", { method: "POST", token, body: data }),
+  update: (token, id, data) => request(`/outlet-items/${id}`, { method: "PUT", token, body: data }),
+  remove: (token, id) => request(`/outlet-items/${id}`, { method: "DELETE", token }),
+};
 
+export { API_BASE_URL };

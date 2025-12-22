@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS users (
   nama VARCHAR(100) NOT NULL,
   email VARCHAR(150) NOT NULL UNIQUE,
   password VARCHAR(255) NOT NULL,
-  role ENUM('customer', 'admin') NOT NULL DEFAULT 'customer',
+  role ENUM('customer', 'admin', 'superadmin', 'partner') NOT NULL DEFAULT 'customer',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

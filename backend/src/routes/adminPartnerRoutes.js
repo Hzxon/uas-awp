@@ -12,6 +12,7 @@ router.get("/", requireAdmin, adminPartnerController.listPartners);
 router.get("/:id", requireAdmin, adminPartnerController.getPartner);
 
 // Write routes - only superadmin can modify
+router.post("/", requireSuperAdmin, adminPartnerController.createPartner);
 router.post("/:id/approve", requireSuperAdmin, adminPartnerController.approvePartner);
 router.post("/:id/reject", requireSuperAdmin, adminPartnerController.rejectPartner);
 router.post("/:id/suspend", requireSuperAdmin, adminPartnerController.suspendPartner);

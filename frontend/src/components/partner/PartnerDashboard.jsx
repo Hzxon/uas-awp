@@ -173,7 +173,7 @@ const PartnerDashboard = ({ token }) => {
             </div>
 
             {/* Quick Actions */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <Link to="/partner/orders" className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all group">
                     <div className="flex items-center gap-4">
                         <div className="w-14 h-14 bg-blue-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -186,6 +186,18 @@ const PartnerDashboard = ({ token }) => {
                     </div>
                 </Link>
 
+                <Link to="/partner/items" className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all group">
+                    <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 bg-pink-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <i className="fas fa-tags text-2xl text-pink-600"></i>
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-gray-900">Layanan & Produk</h4>
+                            <p className="text-sm text-gray-600">Kelola layanan dan produk outlet</p>
+                        </div>
+                    </div>
+                </Link>
+
                 <Link to="/partner/settings" className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all group">
                     <div className="flex items-center gap-4">
                         <div className="w-14 h-14 bg-purple-100 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -193,7 +205,7 @@ const PartnerDashboard = ({ token }) => {
                         </div>
                         <div>
                             <h4 className="font-bold text-gray-900">Pengaturan</h4>
-                            <p className="text-sm text-gray-600">Edit profil dan layanan</p>
+                            <p className="text-sm text-gray-600">Edit profil outlet</p>
                         </div>
                     </div>
                 </Link>

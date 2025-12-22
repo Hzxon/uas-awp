@@ -52,6 +52,10 @@ app.use("/api/partner", partnerRoutes);
 app.use("/api/admin/partners", adminPartnerRoutes);
 app.use("/api/reviews", reviewRoutes);
 
+// Outlet items routes
+const outletItemRoutes = require("./routes/outletItemRoutes");
+app.use("/api/outlet-items", outletItemRoutes);
+
 // Admin analytics routes
 const adminAnalyticsRoutes = require("./routes/adminAnalyticsRoutes");
 app.use("/api/admin/analytics", adminAnalyticsRoutes);

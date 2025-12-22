@@ -13,15 +13,24 @@ const ReviewList = ({ outletId, token, isPartner = false }) => {
         const fetchReviews = async () => {
             try {
                 const res = await reviewApi.getOutletReviews(outletId);
-                setReviews(res.reviews || []);
-                setStats(res.stats);
+                if (res && typeof res === 'object') {
+                    setReviews(res.reviews || []);
+                    setStats(res.stats || null);
+                }
             } catch (err) {
                 console.error('Failed to fetch reviews:', err);
+                // Don't crash - just show empty reviews
+                setReviews([]);
+                setStats(null);
             } finally {
                 setLoading(false);
             }
         };
-        if (outletId) fetchReviews();
+        if (outletId) {
+            fetchReviews();
+        } else {
+            setLoading(false);
+        }
     }, [outletId]);
 
     const handleReply = async (reviewId) => {

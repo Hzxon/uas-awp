@@ -7,6 +7,24 @@ const AdminPartnerApproval = ({ token, userRole }) => {
     const [statusFilter, setStatusFilter] = useState('pending');
     const [processingId, setProcessingId] = useState(null);
 
+    // Create Partner Modal State
+    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [isCreating, setIsCreating] = useState(false);
+    const [createForm, setCreateForm] = useState({
+        nama: '',
+        email: '',
+        password: '',
+        business_name: '',
+        business_license: '',
+        outlet_name: '',
+        outlet_address: '',
+        outlet_phone: '',
+        outlet_description: '',
+        bank_name: '',
+        bank_account: '',
+        bank_holder: ''
+    });
+
     const fetchPartners = async () => {
         setLoading(true);
         try {
@@ -73,6 +91,42 @@ const AdminPartnerApproval = ({ token, userRole }) => {
         }
     };
 
+    // Create Partner Handlers
+    const handleCreateFormChange = (e) => {
+        const { name, value } = e.target;
+        setCreateForm(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleCreatePartner = async (e) => {
+        e.preventDefault();
+        setIsCreating(true);
+        try {
+            await adminPartnerApi.create(token, createForm);
+            alert('Partner berhasil dibuat!');
+            setShowCreateModal(false);
+            setCreateForm({
+                nama: '',
+                email: '',
+                password: '',
+                business_name: '',
+                business_license: '',
+                outlet_name: '',
+                outlet_address: '',
+                outlet_phone: '',
+                outlet_description: '',
+                bank_name: '',
+                bank_account: '',
+                bank_holder: ''
+            });
+            setStatusFilter('approved');
+            fetchPartners();
+        } catch (err) {
+            alert(err.message || 'Gagal membuat partner');
+        } finally {
+            setIsCreating(false);
+        }
+    };
+
     const statusColors = {
         pending: 'bg-yellow-100 text-yellow-700',
         approved: 'bg-green-100 text-green-700',
@@ -97,19 +151,33 @@ const AdminPartnerApproval = ({ token, userRole }) => {
                     <p className="text-gray-600">Kelola aplikasi partner laundry</p>
                 </div>
                 <div className="flex gap-2">
-                    {['pending', 'approved', 'rejected', 'suspended', 'all'].map((status) => (
+                    {/* Create Partner Button - Only for SuperAdmin */}
+                    {userRole === 'superadmin' && (
                         <button
-                            key={status}
-                            onClick={() => setStatusFilter(status)}
-                            className={`px-4 py-2 rounded-lg font-medium text-sm capitalize ${statusFilter === status
-                                ? 'bg-pink-500 text-white'
-                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                }`}
+                            onClick={() => setShowCreateModal(true)}
+                            className="px-4 py-2 bg-green-500 text-white rounded-lg font-medium text-sm hover:bg-green-600 flex items-center gap-2"
                         >
-                            {status === 'all' ? 'Semua' : status}
+                            <i className="fas fa-plus"></i>
+                            Tambah Partner
                         </button>
-                    ))}
+                    )}
                 </div>
+            </div>
+
+            {/* Filter Tabs */}
+            <div className="flex gap-2 flex-wrap">
+                {['pending', 'approved', 'rejected', 'suspended', 'all'].map((status) => (
+                    <button
+                        key={status}
+                        onClick={() => setStatusFilter(status)}
+                        className={`px-4 py-2 rounded-lg font-medium text-sm capitalize ${statusFilter === status
+                            ? 'bg-pink-500 text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                    >
+                        {status === 'all' ? 'Semua' : status}
+                    </button>
+                ))}
             </div>
 
             {/* Partner List */}
@@ -199,8 +267,237 @@ const AdminPartnerApproval = ({ token, userRole }) => {
                     ))}
                 </div>
             )}
+
+            {/* Create Partner Modal */}
+            {showCreateModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
+                        <div className="p-6 border-b border-gray-200">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-xl font-bold text-gray-900">Tambah Partner Baru</h3>
+                                <button
+                                    onClick={() => setShowCreateModal(false)}
+                                    className="text-gray-400 hover:text-gray-600"
+                                >
+                                    <i className="fas fa-times text-xl"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <form onSubmit={handleCreatePartner} className="p-6 space-y-6">
+                            {/* User Info Section */}
+                            <div>
+                                <h4 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                                    <i className="fas fa-user text-purple-500"></i>
+                                    Informasi Akun
+                                </h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap *</label>
+                                        <input
+                                            type="text"
+                                            name="nama"
+                                            value={createForm.nama}
+                                            onChange={handleCreateFormChange}
+                                            required
+                                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                            placeholder="Nama pemilik partner"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                                        <input
+                                            type="email"
+                                            name="email"
+                                            value={createForm.email}
+                                            onChange={handleCreateFormChange}
+                                            required
+                                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                            placeholder="email@partner.com"
+                                        />
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Password *</label>
+                                        <input
+                                            type="password"
+                                            name="password"
+                                            value={createForm.password}
+                                            onChange={handleCreateFormChange}
+                                            required
+                                            minLength={6}
+                                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                            placeholder="Minimal 6 karakter"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Business Info Section */}
+                            <div>
+                                <h4 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                                    <i className="fas fa-briefcase text-pink-500"></i>
+                                    Informasi Bisnis
+                                </h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Nama Bisnis *</label>
+                                        <input
+                                            type="text"
+                                            name="business_name"
+                                            value={createForm.business_name}
+                                            onChange={handleCreateFormChange}
+                                            required
+                                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                            placeholder="Nama bisnis laundry"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">No. Izin Usaha</label>
+                                        <input
+                                            type="text"
+                                            name="business_license"
+                                            value={createForm.business_license}
+                                            onChange={handleCreateFormChange}
+                                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                            placeholder="Opsional"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Outlet Info Section */}
+                            <div>
+                                <h4 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                                    <i className="fas fa-store text-cyan-500"></i>
+                                    Informasi Outlet
+                                </h4>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Nama Outlet *</label>
+                                        <input
+                                            type="text"
+                                            name="outlet_name"
+                                            value={createForm.outlet_name}
+                                            onChange={handleCreateFormChange}
+                                            required
+                                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                            placeholder="Nama outlet laundry"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">No. Telepon Outlet</label>
+                                        <input
+                                            type="tel"
+                                            name="outlet_phone"
+                                            value={createForm.outlet_phone}
+                                            onChange={handleCreateFormChange}
+                                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                            placeholder="08xxxxxxxxxx"
+                                        />
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Alamat Outlet *</label>
+                                        <textarea
+                                            name="outlet_address"
+                                            value={createForm.outlet_address}
+                                            onChange={handleCreateFormChange}
+                                            required
+                                            rows={2}
+                                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                            placeholder="Alamat lengkap outlet"
+                                        />
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Deskripsi Outlet</label>
+                                        <textarea
+                                            name="outlet_description"
+                                            value={createForm.outlet_description}
+                                            onChange={handleCreateFormChange}
+                                            rows={2}
+                                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                            placeholder="Deskripsi layanan outlet (opsional)"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Bank Info Section */}
+                            <div>
+                                <h4 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                                    <i className="fas fa-university text-green-500"></i>
+                                    Informasi Bank (Opsional)
+                                </h4>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Nama Bank</label>
+                                        <input
+                                            type="text"
+                                            name="bank_name"
+                                            value={createForm.bank_name}
+                                            onChange={handleCreateFormChange}
+                                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                            placeholder="BCA, Mandiri, dll"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">No. Rekening</label>
+                                        <input
+                                            type="text"
+                                            name="bank_account"
+                                            value={createForm.bank_account}
+                                            onChange={handleCreateFormChange}
+                                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                            placeholder="Nomor rekening"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Nama Pemilik Rekening</label>
+                                        <input
+                                            type="text"
+                                            name="bank_holder"
+                                            value={createForm.bank_holder}
+                                            onChange={handleCreateFormChange}
+                                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                            placeholder="Nama sesuai rekening"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Submit Buttons */}
+                            <div className="flex gap-3 pt-4 border-t border-gray-200">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowCreateModal(false)}
+                                    className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50"
+                                >
+                                    Batal
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isCreating}
+                                    className="flex-1 px-4 py-3 bg-purple-500 text-white rounded-lg font-medium hover:bg-purple-600 disabled:opacity-50 flex items-center justify-center gap-2"
+                                >
+                                    {isCreating ? (
+                                        <>
+                                            <i className="fas fa-spinner fa-spin"></i>
+                                            Menyimpan...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <i className="fas fa-check"></i>
+                                            Buat Partner
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
 
 export default AdminPartnerApproval;
+
