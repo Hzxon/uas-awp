@@ -60,6 +60,9 @@ app.use("/api/outlet-items", outletItemRoutes);
 const adminAnalyticsRoutes = require("./routes/adminAnalyticsRoutes");
 app.use("/api/admin/analytics", adminAnalyticsRoutes);
 
+// Tes
+app.get("/", (req, res) => res.send("Backend OK"));
+
 // Health Check
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", port: PORT });
@@ -79,7 +82,7 @@ app.use((err, req, res, next) => {
 const startServer = async () => {
   // 1. Nyalakan server dulu
   app.listen(PORT, () => {
-    console.log(`Server REAL running on http://localhost:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
   });
 
   // 2. Baru coba konek DB (hanya untuk info)
