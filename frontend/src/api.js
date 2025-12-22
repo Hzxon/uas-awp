@@ -1,5 +1,12 @@
-const DEFAULT_API_BASE_URL = "http://localhost:5001/api";
-const API_BASE_URL = (import.meta.env.VITE_API_URL || DEFAULT_API_BASE_URL).replace(/\/$/, "");
+import axios from "axios";
+
+export const api = axios.create({
+  baseURL: `${import.meta.env.VITE_API_BASE_URL}/api`,
+  withCredentials: true,
+});
+
+const DEFAULT_API_BASE_URL = "http://localhost:5001";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const request = async (path, { method = "GET", token, body } = {}) => {
   const headers = { "Content-Type": "application/json" };
@@ -21,7 +28,7 @@ const request = async (path, { method = "GET", token, body } = {}) => {
   let lastErr;
   for (const base of bases) {
     try {
-      const response = await fetch(`${base}${path}`, options);
+      const response = await fetch(`${base}/api${path}`, options);
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
