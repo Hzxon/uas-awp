@@ -25,11 +25,12 @@ const app = express();
 
 // --- CONFIG CORS FINAL (YANG TERBUKTI BERHASIL) ---
 app.use(cors({
-  origin: ["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:4173"], // Whitelist frontend
-  credentials: true, // Wajib agar cookie/session jalan
+  origin: true,
+  credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
+
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" },
 }));
@@ -79,7 +80,7 @@ app.use((err, req, res, next) => {
 const startServer = async () => {
   // 1. Nyalakan server dulu
   app.listen(PORT, () => {
-    console.log(`Server REAL running on http://localhost:${PORT}`);
+    console.log(`Server running on port ${PORT}`);
   });
 
   // 2. Baru coba konek DB (hanya untuk info)
