@@ -98,7 +98,7 @@ const MapPicker = ({ value, onChange, height = "16rem" }) => {
         </GoogleMap>
       </div>
       <p className="text-xs text-slate-500">
-        Tarik pin atau klik pada peta untuk memperbarui lat/long.
+        Cari alamat di atas, atau geser pin untuk menentukan lokasi yang tepat.
       </p>
     </div>
   );

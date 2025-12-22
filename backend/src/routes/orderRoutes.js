@@ -1,10 +1,10 @@
-const router = require("express").Router(); 
+const router = require("express").Router();
 const express = require("express");
 const { createOrder, listOrders, getOrder, listAllOrders } = require("../controllers/orderController");
-const { requireAdmin } = require("../middleware/auth");
+const { verifyToken, requireAdmin } = require("../middleware/auth");
 
 router.post("/", createOrder);
-router.get("/admin/all", requireAdmin, listAllOrders);
+router.get("/admin/all", verifyToken, requireAdmin, listAllOrders);
 router.get("/", listOrders);
 router.get("/:id", getOrder);
 

@@ -7,15 +7,22 @@ const { requireAdmin, requireSuperAdmin } = require("../middleware/roleCheck");
 // All routes require authentication
 router.use(verifyToken);
 
-// Read routes - all admins can view
-router.get("/", requireAdmin, adminPartnerController.listPartners);
-router.get("/:id", requireAdmin, adminPartnerController.getPartner);
+// Static routes MUST come before dynamic :id routes
+// Get list of admin users for owner selection
+router.get("/admins/list", requireSuperAdmin, adminPartnerController.listAdminUsers);
 
-// Write routes - only superadmin can modify
+// List all partners
+router.get("/", requireAdmin, adminPartnerController.listPartners);
+
+// Create new partner
 router.post("/", requireSuperAdmin, adminPartnerController.createPartner);
+
+// Dynamic :id routes
+router.get("/:id", requireAdmin, adminPartnerController.getPartner);
 router.post("/:id/approve", requireSuperAdmin, adminPartnerController.approvePartner);
 router.post("/:id/reject", requireSuperAdmin, adminPartnerController.rejectPartner);
 router.post("/:id/suspend", requireSuperAdmin, adminPartnerController.suspendPartner);
 router.post("/:id/reactivate", requireSuperAdmin, adminPartnerController.reactivatePartner);
 
 module.exports = router;
+

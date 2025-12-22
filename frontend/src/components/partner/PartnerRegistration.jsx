@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { partnerApi } from '../../api';
 
-const PartnerRegistration = ({ token, onSuccess }) => {
+const PartnerRegistration = ({ token, onSuccess, isLoggedIn, onRequireAuth }) => {
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
+    const [hasExistingProfile, setHasExistingProfile] = useState(false);
+    const [existingProfileStatus, setExistingProfileStatus] = useState('');
+    const [checkingProfile, setCheckingProfile] = useState(true);
 
     const [formData, setFormData] = useState({
         business_name: '',
@@ -20,6 +23,30 @@ const PartnerRegistration = ({ token, onSuccess }) => {
         lat: 0,
         lng: 0
     });
+
+    // Check if user already has a partner profile
+    useEffect(() => {
+        const checkExistingProfile = async () => {
+            if (!isLoggedIn || !token) {
+                setCheckingProfile(false);
+                return;
+            }
+
+            try {
+                const result = await partnerApi.getProfile(token);
+                if (result.profile) {
+                    setHasExistingProfile(true);
+                    setExistingProfileStatus(result.profile.status);
+                }
+            } catch (err) {
+                // No profile exists - this is expected, allow registration
+            } finally {
+                setCheckingProfile(false);
+            }
+        };
+
+        checkExistingProfile();
+    }, [isLoggedIn, token]);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -53,6 +80,135 @@ const PartnerRegistration = ({ token, onSuccess }) => {
             setLoading(false);
         }
     };
+
+    // Loading state while checking profile
+    if (checkingProfile && isLoggedIn) {
+        return (
+            <div className="max-w-2xl mx-auto p-8">
+                <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
+                    <i className="fas fa-spinner fa-spin text-4xl text-pink-500 mb-4"></i>
+                    <p className="text-gray-600">Memeriksa profil partner...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // User already has a partner profile
+    if (hasExistingProfile) {
+        return (
+            <div className="max-w-2xl mx-auto p-8">
+                <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
+                    <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-pink-400 to-pink-600 rounded-full flex items-center justify-center">
+                        <i className="fas fa-store text-4xl text-white"></i>
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-4">Anda Sudah Terdaftar sebagai Mitra</h2>
+
+                    {existingProfileStatus === 'pending' && (
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
+                            <p className="text-yellow-700">
+                                <i className="fas fa-clock mr-2"></i>
+                                Status pendaftaran Anda: <strong>Menunggu Persetujuan</strong>
+                            </p>
+                            <p className="text-sm text-yellow-600 mt-2">
+                                Tim kami sedang meninjau aplikasi Anda. Kami akan menghubungi Anda dalam 1-3 hari kerja.
+                            </p>
+                        </div>
+                    )}
+
+                    {existingProfileStatus === 'approved' && (
+                        <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6">
+                            <p className="text-green-700">
+                                <i className="fas fa-check-circle mr-2"></i>
+                                Status: <strong>Disetujui</strong>
+                            </p>
+                            <p className="text-sm text-green-600 mt-2">
+                                Selamat! Anda sudah bisa mengelola outlet Anda.
+                            </p>
+                        </div>
+                    )}
+
+                    {existingProfileStatus === 'rejected' && (
+                        <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
+                            <p className="text-red-700">
+                                <i className="fas fa-times-circle mr-2"></i>
+                                Status: <strong>Ditolak</strong>
+                            </p>
+                            <p className="text-sm text-red-600 mt-2">
+                                Mohon maaf, pendaftaran Anda ditolak. Silakan hubungi tim kami untuk informasi lebih lanjut.
+                            </p>
+                        </div>
+                    )}
+
+                    {existingProfileStatus === 'suspended' && (
+                        <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-6">
+                            <p className="text-gray-700">
+                                <i className="fas fa-pause-circle mr-2"></i>
+                                Status: <strong>Ditangguhkan</strong>
+                            </p>
+                            <p className="text-sm text-gray-600 mt-2">
+                                Akun partner Anda sedang ditangguhkan. Silakan hubungi admin.
+                            </p>
+                        </div>
+                    )}
+
+                    <div className="flex gap-4 justify-center">
+                        {existingProfileStatus === 'approved' && (
+                            <a href="/partner/dashboard" className="px-6 py-3 bg-pink-500 text-white rounded-xl font-bold hover:bg-pink-600 transition">
+                                <i className="fas fa-tachometer-alt mr-2"></i>
+                                Dashboard Partner
+                            </a>
+                        )}
+                        <a href="/" className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition">
+                            Kembali ke Beranda
+                        </a>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Show login prompt for guests
+    if (!isLoggedIn) {
+        return (
+            <div className="max-w-2xl mx-auto p-8">
+                <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
+                    <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-pink-400 to-pink-600 rounded-full flex items-center justify-center">
+                        <i className="fas fa-store text-4xl text-white"></i>
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-4">Daftar Sebagai Mitra</h2>
+                    <p className="text-gray-600 mb-6">
+                        Gabung dengan WashFast dan kembangkan bisnis laundry Anda! Nikmati kemudahan mengelola outlet dan menjangkau lebih banyak pelanggan.
+                    </p>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                        <div className="bg-pink-50 rounded-xl p-4">
+                            <i className="fas fa-chart-line text-2xl text-pink-500 mb-2"></i>
+                            <p className="text-sm font-semibold text-gray-700">Jangkau Lebih Banyak</p>
+                        </div>
+                        <div className="bg-pink-50 rounded-xl p-4">
+                            <i className="fas fa-mobile-alt text-2xl text-pink-500 mb-2"></i>
+                            <p className="text-sm font-semibold text-gray-700">Panel Admin Mudah</p>
+                        </div>
+                        <div className="bg-pink-50 rounded-xl p-4">
+                            <i className="fas fa-hand-holding-usd text-2xl text-pink-500 mb-2"></i>
+                            <p className="text-sm font-semibold text-gray-700">Pembayaran Aman</p>
+                        </div>
+                    </div>
+
+                    <button
+                        onClick={() => onRequireAuth && onRequireAuth()}
+                        className="px-8 py-3 bg-pink-500 text-white rounded-xl font-bold hover:bg-pink-600 transition"
+                    >
+                        <i className="fas fa-sign-in-alt mr-2"></i>
+                        Login untuk Mendaftar
+                    </button>
+                    <p className="text-sm text-gray-500 mt-4">
+                        Belum punya akun? Login akan membuka form registrasi.
+                    </p>
+                </div>
+            </div>
+        );
+    }
 
     if (success) {
         return (
@@ -288,7 +444,13 @@ const PartnerRegistration = ({ token, onSuccess }) => {
                                 Kembali
                             </button>
                         ) : (
-                            <div></div>
+                            <a
+                                href="/"
+                                className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 flex items-center"
+                            >
+                                <i className="fas fa-home mr-2"></i>
+                                Beranda
+                            </a>
                         )}
 
                         {step < 3 ? (

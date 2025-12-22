@@ -102,27 +102,39 @@ const AdminAnalytics = ({ token }) => {
                     <span className="text-3xl font-bold text-green-600">{formatCurrency(stats?.totalRevenue)}</span>
                 </div>
 
-                {/* Monthly Chart Placeholder */}
-                {stats?.monthlyRevenue && stats.monthlyRevenue.length > 0 && (
-                    <div className="mt-4 pt-4 border-t border-gray-100">
-                        <p className="text-sm text-gray-600 mb-4">Revenue 6 Bulan Terakhir</p>
-                        <div className="flex items-end gap-2 h-32">
+                {/* Monthly Chart - Always Show */}
+                <div className="mt-4 pt-4 border-t border-gray-100">
+                    <p className="text-sm text-gray-600 mb-4">Revenue 6 Bulan Terakhir</p>
+                    {stats?.monthlyRevenue && stats.monthlyRevenue.length > 0 ? (
+                        <div className="flex items-end justify-center gap-3" style={{ height: '150px' }}>
                             {stats.monthlyRevenue.map((month, idx) => {
-                                const maxRevenue = Math.max(...stats.monthlyRevenue.map(m => m.revenue));
-                                const height = maxRevenue > 0 ? (month.revenue / maxRevenue) * 100 : 0;
+                                const maxRevenue = Math.max(...stats.monthlyRevenue.map(m => Number(m.revenue) || 0));
+                                const revenue = Number(month.revenue) || 0;
+                                const heightPx = maxRevenue > 0 ? Math.max((revenue / maxRevenue) * 100, 20) : 20;
+                                const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+                                const monthNum = parseInt(month.month?.split('-')[1]) - 1;
                                 return (
-                                    <div key={idx} className="flex-1 flex flex-col items-center">
+                                    <div key={idx} className="flex flex-col items-center" style={{ minWidth: '60px' }}>
+                                        <p className="text-xs font-semibold text-gray-700 mb-1">
+                                            {formatCurrency(revenue).replace('Rp ', '')}
+                                        </p>
                                         <div
-                                            className="w-full bg-gradient-to-t from-pink-500 to-pink-400 rounded-t"
-                                            style={{ height: `${Math.max(height, 5)}%` }}
+                                            className="w-10 bg-gradient-to-t from-pink-500 to-pink-400 rounded-t-lg shadow-md"
+                                            style={{ height: `${heightPx}px` }}
+                                            title={formatCurrency(revenue)}
                                         ></div>
-                                        <p className="text-xs text-gray-500 mt-2">{month.month?.split('-')[1]}</p>
+                                        <p className="text-xs font-medium text-gray-600 mt-2">{monthNames[monthNum] || month.month?.split('-')[1]}</p>
+                                        <p className="text-xs text-gray-400">{month.orders || 0} order</p>
                                     </div>
                                 );
                             })}
                         </div>
-                    </div>
-                )}
+                    ) : (
+                        <div className="h-32 flex items-center justify-center bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                            <p className="text-sm text-gray-400">Belum ada data revenue dalam 6 bulan terakhir</p>
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Two Column Layout */}
@@ -139,9 +151,9 @@ const AdminAnalytics = ({ token }) => {
                                 <div key={outlet.id} className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                         <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${idx === 0 ? 'bg-yellow-500 text-white' :
-                                                idx === 1 ? 'bg-gray-300 text-gray-700' :
-                                                    idx === 2 ? 'bg-orange-400 text-white' :
-                                                        'bg-gray-100 text-gray-600'
+                                            idx === 1 ? 'bg-gray-300 text-gray-700' :
+                                                idx === 2 ? 'bg-orange-400 text-white' :
+                                                    'bg-gray-100 text-gray-600'
                                             }`}>{idx + 1}</span>
                                         <span className="font-medium text-gray-900">{outlet.nama}</span>
                                     </div>
@@ -163,23 +175,31 @@ const AdminAnalytics = ({ token }) => {
                         <i className="fas fa-clock text-blue-500 mr-2"></i>
                         Pesanan Terbaru
                     </h3>
-                    {activities?.recentOrders?.length > 0 ? (
+                    {activities?.recentOrders && activities.recentOrders.length > 0 ? (
                         <div className="space-y-3">
                             {activities.recentOrders.slice(0, 5).map((order) => (
-                                <div key={order.id} className="flex items-center justify-between text-sm">
+                                <div key={order.id} className="flex items-center justify-between text-sm border-b border-gray-100 pb-2 last:border-0">
                                     <div>
                                         <p className="font-medium text-gray-900">#{order.id} - {order.customer_name || 'Customer'}</p>
-                                        <p className="text-xs text-gray-500">{formatDate(order.tanggal)}</p>
+                                        <p className="text-xs text-gray-500">{order.outlet_name} • {formatDate(order.tanggal)}</p>
                                     </div>
                                     <div className="text-right">
                                         <p className="font-bold text-green-600">{formatCurrency(order.total_pembayaran)}</p>
-                                        <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">{order.status}</span>
+                                        <span className={`text-xs px-2 py-0.5 rounded-full ${order.status === 'done' ? 'bg-green-100 text-green-600' :
+                                            order.status === 'processing' ? 'bg-blue-100 text-blue-600' :
+                                                order.status === 'pending' ? 'bg-yellow-100 text-yellow-600' :
+                                                    'bg-gray-100 text-gray-600'
+                                            }`}>{order.status}</span>
                                     </div>
                                 </div>
                             ))}
                         </div>
                     ) : (
-                        <p className="text-gray-500 text-center py-4">Belum ada pesanan</p>
+                        <div className="text-center py-8">
+                            <i className="fas fa-inbox text-4xl text-gray-300 mb-3"></i>
+                            <p className="text-gray-500">Belum ada pesanan</p>
+                            <p className="text-xs text-gray-400 mt-1">Pesanan terbaru akan muncul di sini</p>
+                        </div>
                     )}
                 </div>
             </div>

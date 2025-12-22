@@ -384,3 +384,26 @@ exports.createPartner = async (req, res) => {
         connection.release();
     }
 };
+
+// List admin users for owner selection dropdown
+exports.listAdminUsers = async (req, res) => {
+    try {
+        const [admins] = await pool.query(`
+            SELECT id, nama, email, role 
+            FROM users 
+            WHERE role IN ('admin', 'superadmin')
+            ORDER BY nama ASC
+        `);
+
+        return res.json({
+            success: true,
+            admins: admins
+        });
+    } catch (err) {
+        console.error("listAdminUsers error:", err);
+        return res.status(500).json({
+            success: false,
+            message: "Gagal mengambil daftar admin"
+        });
+    }
+};

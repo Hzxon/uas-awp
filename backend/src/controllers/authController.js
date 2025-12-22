@@ -94,8 +94,6 @@ exports.signup = async (req, res) => {
 };
 
 exports.login = async (req, res) => {
-  console.log("🔥 REQUEST LOGIN MASUK!"); // <--- Tambahkan ini
-  console.log("Body:", req.body);
   try {
     const email = req.body.email?.toLowerCase().trim();
     const password = req.body.password?.trim();
@@ -181,9 +179,6 @@ exports.me = async (req, res) => {
 exports.googleLogin = async (req, res) => {
   try {
     const { credential } = req.body;
-
-    console.log("🔐 Google login attempt");
-    console.log("GOOGLE_CLIENT_ID configured:", !!process.env.GOOGLE_CLIENT_ID);
 
     if (!credential) {
       return res.status(400).json({

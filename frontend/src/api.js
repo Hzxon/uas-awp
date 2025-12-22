@@ -131,6 +131,7 @@ export const adminPartnerApi = {
     request(`/admin/partners/${id}/reject`, { method: "POST", token, body: { reason } }),
   suspend: (token, id) => request(`/admin/partners/${id}/suspend`, { method: "POST", token }),
   reactivate: (token, id) => request(`/admin/partners/${id}/reactivate`, { method: "POST", token }),
+  listAdmins: (token) => request("/admin/partners/admins/list", { token }),
 };
 
 // Review API

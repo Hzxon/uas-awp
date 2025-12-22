@@ -120,6 +120,12 @@ exports.deleteLayanan = async (req, res) => {
     });
   } catch (err) {
     console.error("Error deleteLayanan:", err);
+    // Handle foreign key constraint error
+    if (err.code === 'ER_ROW_IS_REFERENCED_2' || err.errno === 1451) {
+      return res.status(400).json({
+        message: "Layanan tidak dapat dihapus karena sudah digunakan dalam pesanan. Silakan arsipkan layanan ini atau hapus pesanan terkait terlebih dahulu."
+      });
+    }
     res.status(500).json({ message: "Gagal menghapus layanan" });
   }
 };
@@ -209,6 +215,12 @@ exports.deleteProduk = async (req, res) => {
     });
   } catch (err) {
     console.error("Error deleteProduk:", err);
+    // Handle foreign key constraint error
+    if (err.code === 'ER_ROW_IS_REFERENCED_2' || err.errno === 1451) {
+      return res.status(400).json({
+        message: "Produk tidak dapat dihapus karena sudah digunakan dalam pesanan. Silakan arsipkan produk ini atau hapus pesanan terkait terlebih dahulu."
+      });
+    }
     res.status(500).json({ message: "Gagal menghapus produk" });
   }
 };

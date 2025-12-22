@@ -306,8 +306,8 @@ const App = () => {
           path="/admin/orders"
           element={
             <ProtectedRoute isLoggedIn={isLoggedIn} onRequireAuth={requireLogin}>
-              {user?.role === "admin" ? (
-                <AdminOrdersPage authToken={authToken} userName={user?.nama || ""} />
+              {user?.role === "admin" || user?.role === "superadmin" ? (
+                <AdminOrdersPage authToken={authToken} userName={user?.nama || ""} userRole={user?.role} />
               ) : (
                 <Navigate to="/" replace />
               )}
@@ -328,9 +328,11 @@ const App = () => {
         <Route
           path="/partner/register"
           element={
-            <ProtectedRoute isLoggedIn={isLoggedIn} onRequireAuth={requireLogin}>
-              <PartnerRegistration token={authToken} />
-            </ProtectedRoute>
+            <PartnerRegistration
+              token={authToken}
+              isLoggedIn={isLoggedIn}
+              onRequireAuth={requireLogin}
+            />
           }
         />
 

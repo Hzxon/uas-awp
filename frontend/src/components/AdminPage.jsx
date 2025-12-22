@@ -32,6 +32,12 @@ const AdminPage = ({ userName, userRole, onLogout, authToken }) => {
   const [editLayanan, setEditLayanan] = useState(emptyEntry);
   const [editProduk, setEditProduk] = useState(emptyEntry);
 
+  // State untuk konfirmasi hapus
+  const [deleteConfirm, setDeleteConfirm] = useState({ open: false, type: null, id: null, name: '' });
+
+  // State untuk mobile sidebar toggle
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
   // Effect untuk menerapkan dark mode
   useEffect(() => {
     if (isDarkMode) {
@@ -119,15 +125,30 @@ const AdminPage = ({ userName, userRole, onLogout, authToken }) => {
     }
   };
 
-  const handleDeleteLayanan = async (id) => {
-    if (!window.confirm("Hapus layanan ini?")) return;
+  // Fungsi untuk membuka modal konfirmasi hapus
+  const openDeleteConfirm = (type, id, name) => {
+    setDeleteConfirm({ open: true, type, id, name });
+  };
+
+  // Fungsi untuk mengeksekusi penghapusan setelah konfirmasi
+  const confirmDelete = async () => {
+    const { type, id } = deleteConfirm;
     try {
-      await layananApi.remove(authToken, id);
-      setLayanan((prev) => prev.filter((l) => l.id !== id));
+      if (type === 'layanan') {
+        await layananApi.remove(authToken, id);
+        setLayanan((prev) => prev.filter((l) => l.id !== id));
+      } else {
+        await produkApi.remove(authToken, id);
+        setProduk((prev) => prev.filter((p) => p.id !== id));
+      }
       setLastSync(new Date());
     } catch (err) {
-      console.error("Gagal hapus layanan:", err);
-      alert("Gagal menghapus layanan");
+      console.error(`Gagal hapus ${type}:`, err);
+      // Show error message from server or fallback
+      const errorMessage = err.message || `Gagal menghapus ${type}`;
+      alert(errorMessage);
+    } finally {
+      setDeleteConfirm({ open: false, type: null, id: null, name: '' });
     }
   };
 
@@ -142,18 +163,6 @@ const AdminPage = ({ userName, userRole, onLogout, authToken }) => {
     } catch (err) {
       console.error("Gagal tambah produk:", err);
       alert(err.message || "Gagal menambah produk");
-    }
-  };
-
-  const handleDeleteProduk = async (id) => {
-    if (!window.confirm("Hapus produk ini?")) return;
-    try {
-      await produkApi.remove(authToken, id);
-      setProduk((prev) => prev.filter((p) => p.id !== id));
-      setLastSync(new Date());
-    } catch (err) {
-      console.error("Gagal hapus produk:", err);
-      alert("Gagal menghapus produk");
     }
   };
 
@@ -250,13 +259,42 @@ const AdminPage = ({ userName, userRole, onLogout, authToken }) => {
       };
 
   return (
-    <div className="checkout-address-page relative min-h-screen text-slate-900">
+    <div className="checkout-address-page relative min-h-screen text-slate-900 overflow-x-hidden">
       <div className="flex min-h-screen">
+        {/* Mobile Sidebar Toggle Button */}
+        <button
+          onClick={() => setIsSidebarOpen(true)}
+          className="fixed top-4 left-4 z-[60] md:hidden w-10 h-10 bg-white rounded-xl shadow-lg border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-slate-50"
+        >
+          <i className="fas fa-bars"></i>
+        </button>
+
+        {/* Sidebar Overlay - Mobile Only */}
+        {isSidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/40 z-[70] md:hidden"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
+
         {/* Sidebar - Fixed position, full height */}
-        <aside className="w-72 fixed left-0 top-0 h-screen border-r border-white/30 p-6 flex flex-col bg-gradient-to-b from-cyan-50/50 via-white/30 to-amber-50/50 z-40">
-          <div className="flex-1 overflow-y-auto">
+        <aside className={`
+          w-72 fixed left-0 top-0 h-screen border-r border-white/30 p-4 md:p-6 flex flex-col bg-gradient-to-b from-cyan-50/90 via-white/90 to-amber-50/90 backdrop-blur-sm z-[80]
+          transition-transform duration-300 ease-in-out
+          ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+          md:translate-x-0
+        `}>
+          {/* Close Button - Mobile Only */}
+          <button
+            onClick={() => setIsSidebarOpen(false)}
+            className="absolute top-3 right-3 w-8 h-8 rounded-lg bg-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-300 md:hidden z-10"
+          >
+            <i className="fas fa-times"></i>
+          </button>
+
+          <div className="flex-1 overflow-y-auto mt-10 md:mt-0">
             {/* User Card */}
-            <div className="rounded-2xl bg-white/50 backdrop-blur-sm border border-white/50 p-4 mb-8 shadow-sm">
+            <div className="rounded-2xl bg-white/50 backdrop-blur-sm border border-white/50 p-4 mb-6 shadow-sm">
               <div className="flex items-center gap-3">
                 <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center text-white text-lg font-bold shadow-lg shadow-orange-500/30">
                   {(userName || "A").charAt(0).toUpperCase()}
@@ -274,7 +312,7 @@ const AdminPage = ({ userName, userRole, onLogout, authToken }) => {
             </div>
             <nav className="space-y-2">
               <button
-                onClick={() => setActiveTab("analytics")}
+                onClick={() => { setActiveTab("analytics"); setIsSidebarOpen(false); }}
                 className={`flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition-all ${activeTab === "analytics"
                   ? "bg-white/70 backdrop-blur-sm text-pink-700 border border-pink-300 shadow-md"
                   : "text-slate-700 hover:bg-white/40 hover:text-slate-900"
@@ -286,7 +324,7 @@ const AdminPage = ({ userName, userRole, onLogout, authToken }) => {
 
               {userRole === "superadmin" && (
                 <button
-                  onClick={() => setActiveTab("partners")}
+                  onClick={() => { setActiveTab("partners"); setIsSidebarOpen(false); }}
                   className={`flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition-all ${activeTab === "partners"
                     ? "bg-white/70 backdrop-blur-sm text-purple-700 border border-purple-300 shadow-md"
                     : "text-slate-700 hover:bg-white/40 hover:text-slate-900"
@@ -298,7 +336,7 @@ const AdminPage = ({ userName, userRole, onLogout, authToken }) => {
               )}
 
               <button
-                onClick={() => setActiveTab("layanan")}
+                onClick={() => { setActiveTab("layanan"); setIsSidebarOpen(false); }}
                 className={`flex w-full items-center justify-between rounded-xl px-4 py-3.5 text-sm font-medium transition-all ${activeTab === "layanan"
                   ? "bg-white/70 backdrop-blur-sm text-cyan-700 border border-cyan-300 shadow-md"
                   : "text-slate-700 hover:bg-white/40 hover:text-slate-900"
@@ -315,7 +353,7 @@ const AdminPage = ({ userName, userRole, onLogout, authToken }) => {
               </button>
 
               <button
-                onClick={() => setActiveTab("produk")}
+                onClick={() => { setActiveTab("produk"); setIsSidebarOpen(false); }}
                 className={`flex w-full items-center justify-between rounded-xl px-4 py-3.5 text-sm font-medium transition-all ${activeTab === "produk"
                   ? "bg-white/70 backdrop-blur-sm text-emerald-700 border border-emerald-300 shadow-md"
                   : "text-slate-700 hover:bg-white/40 hover:text-slate-900"
@@ -353,8 +391,8 @@ const AdminPage = ({ userName, userRole, onLogout, authToken }) => {
         </aside>
 
         {/* Main Content */}
-        <main className="ml-72 flex-1 p-6 min-h-screen">
-          <div className="max-w-6xl mx-auto space-y-6">
+        <main className="ml-0 md:ml-72 flex-1 p-4 md:p-6 pt-14 md:pt-6 min-h-screen overflow-y-auto">
+          <div className="max-w-6xl mx-auto space-y-4 md:space-y-6 pb-8">
             {/* Render Analytics or Partners tabs */}
             {activeTab === "analytics" && (
               <AdminAnalytics token={authToken} />
@@ -393,14 +431,8 @@ const AdminPage = ({ userName, userRole, onLogout, authToken }) => {
                       <div id="admin-form" className="rounded-2xl border border-slate-200 bg-white p-5 shadow-md">
                         {activeTab === "layanan" ? (
                           <>
-                            <div className="mb-3 flex items-center justify-between gap-2">
-                              <div>
-                                <p className="text-xs uppercase tracking-[0.14em] text-slate-500">Form</p>
-                                <h3 className="text-lg font-semibold text-slate-900">Tambah layanan</h3>
-                              </div>
-                              <span className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-wide ${accent.pill}`}>
-                                Layanan
-                              </span>
+                            <div className="mb-3">
+                              <h3 className="text-lg font-semibold text-slate-900">Tambah Layanan</h3>
                             </div>
                             <form onSubmit={handleCreateLayanan} className="space-y-3">
                               <label className="block text-xs text-slate-600">
@@ -462,14 +494,8 @@ const AdminPage = ({ userName, userRole, onLogout, authToken }) => {
                           </>
                         ) : (
                           <>
-                            <div className="mb-3 flex items-center justify-between gap-2">
-                              <div>
-                                <p className="text-xs uppercase tracking-[0.14em] text-slate-500">Form</p>
-                                <h3 className="text-lg font-semibold text-slate-900">Tambah produk</h3>
-                              </div>
-                              <span className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-wide ${accent.pill}`}>
-                                Produk
-                              </span>
+                            <div className="mb-3">
+                              <h3 className="text-lg font-semibold text-slate-900">Tambah Produk</h3>
                             </div>
                             <form onSubmit={handleCreateProduk} className="space-y-3">
                               <label className="block text-xs text-slate-600">
@@ -664,9 +690,11 @@ const AdminPage = ({ userName, userRole, onLogout, authToken }) => {
                                         </button>
                                         <button
                                           onClick={() =>
-                                            activeTab === "layanan"
-                                              ? handleDeleteLayanan(item.id)
-                                              : handleDeleteProduk(item.id)
+                                            openDeleteConfirm(
+                                              activeTab,
+                                              item.id,
+                                              item.nama
+                                            )
                                           }
                                           className="flex-1 rounded-lg bg-red-500/90 px-3 py-2 text-xs font-semibold text-white transition hover:bg-red-600"
                                         >
@@ -690,6 +718,48 @@ const AdminPage = ({ userName, userRole, onLogout, authToken }) => {
           </div>
         </main>
       </div>
+
+      {/* Modal Konfirmasi Hapus */}
+      {deleteConfirm.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+            <div className="bg-red-50 px-6 py-4 border-b border-red-100">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center">
+                  <i className="fas fa-trash-alt text-red-600"></i>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-slate-900">Konfirmasi Hapus</h3>
+                  <p className="text-sm text-slate-600">Tindakan ini tidak dapat dibatalkan</p>
+                </div>
+              </div>
+            </div>
+            <div className="px-6 py-5">
+              <p className="text-slate-700">
+                Apakah Anda yakin ingin menghapus <strong className="text-slate-900">{deleteConfirm.name}</strong>?
+              </p>
+              <p className="text-sm text-slate-500 mt-2">
+                {deleteConfirm.type === 'layanan' ? 'Layanan' : 'Produk'} ini akan dihapus secara permanen dari sistem.
+              </p>
+            </div>
+            <div className="px-6 py-4 bg-slate-50 flex gap-3 justify-end">
+              <button
+                onClick={() => setDeleteConfirm({ open: false, type: null, id: null, name: '' })}
+                className="px-4 py-2 rounded-lg border border-slate-200 text-slate-700 font-medium text-sm hover:bg-slate-100 transition"
+              >
+                Batal
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-4 py-2 rounded-lg bg-red-600 text-white font-semibold text-sm hover:bg-red-700 transition shadow-lg shadow-red-500/30"
+              >
+                <i className="fas fa-trash-alt mr-2"></i>
+                Ya, Hapus
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -201,9 +201,7 @@ const Footer = () => {
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-8 pb-8">
                         <div className="space-y-4">
                             <div className="flex items-center gap-2">
-                                <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-teal-600 text-white">
-                                    <i className="fas fa-water"></i>
-                                </span>
+                                <img src="/logo.png" alt="WashFast Logo" className="h-9 w-9 rounded-xl" />
                                 <h3 className="text-xl font-bold text-slate-800">WashFast</h3>
                             </div>
                             <p className="text-sm text-slate-700 leading-relaxed">
@@ -228,6 +226,7 @@ const Footer = () => {
                                 <li><a href="#" className="hover:text-teal-600 transition-colors">Kontak</a></li>
                                 <li><a href="#" className="hover:text-teal-600 transition-colors">Kebijakan Privasi</a></li>
                                 <li><a href="#" className="hover:text-teal-600 transition-colors">Syarat & Ketentuan</a></li>
+                                <li><a href="/partner/register" className="hover:text-teal-600 transition-colors font-medium">🤝 Daftar Jadi Mitra</a></li>
                             </ul>
                         </div>
 

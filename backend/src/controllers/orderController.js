@@ -19,7 +19,7 @@ const sanitizeItems = (items = []) => {
   return items
     .map((item) => ({
       // Mapping pastikan sesuai dengan payload Frontend
-      layanan_id: item.layanan_id || null, 
+      layanan_id: item.layanan_id || null,
       produk_id: item.produk_id || null,
       qty: Number(item.qty) || 0,
       harga_satuan: Number(item.harga_satuan) || 0,
@@ -30,22 +30,15 @@ const sanitizeItems = (items = []) => {
 };
 
 exports.createOrder = async (req, res) => {
-  console.log("Masuk ke api createOrder!");
   try {
     const userId = req.user.id;
-    const tanggal = new Date(); 
+    const tanggal = new Date();
     const addressId = req.body.address_id;
     const outletId = req.body.outlet_id;
     const pickupSlot = req.body.pickup_slot || null;
 
-    // --- DEBUGGING LOG (Cek Terminal Backend saat klik Bayar) ---
-    console.log("🔥 [Backend] Create Order Triggered!");
-    console.log("📦 [Backend] Raw Items dari Frontend:", JSON.stringify(req.body.items, null, 2));
-
     const rawItems = Array.isArray(req.body.items) ? req.body.items : [];
     const items = sanitizeItems(rawItems);
-
-    console.log("✅ [Backend] Items setelah Sanitize:", JSON.stringify(items, null, 2));
 
     // Validasi Item Kosong
     if (items.length === 0) {
@@ -129,10 +122,10 @@ exports.createOrder = async (req, res) => {
     });
 
     const subtotal = normalizedItems.reduce((sum, item) => sum + item.subtotal, 0);
-    
+
     const taxRate = typeof req.body.taxRate === "number" && req.body.taxRate >= 0
-        ? req.body.taxRate
-        : DEFAULT_TAX_RATE;
+      ? req.body.taxRate
+      : DEFAULT_TAX_RATE;
 
     const taxAmount = Math.round(subtotal * taxRate);
     // Hitung jarak dan biaya pengiriman berdasarkan outlet & alamat (butuh lat lng alamat)
@@ -191,12 +184,12 @@ exports.createOrder = async (req, res) => {
 
       // 2. INSERT ke tabel ORDER_DETAILS
       const itemValues = normalizedItems.map((item) => [
-        orderId,            
-        item.layanan_id,    
-        item.produk_id,     
-        item.qty,           
-        item.harga_satuan,  
-        item.subtotal       
+        orderId,
+        item.layanan_id,
+        item.produk_id,
+        item.qty,
+        item.harga_satuan,
+        item.subtotal
       ]);
 
       await connection.query(
@@ -205,8 +198,6 @@ exports.createOrder = async (req, res) => {
       );
 
       await connection.commit();
-
-      console.log("🎉 [Backend] Order Berhasil Dibuat: ID", orderId);
 
       return res.status(201).json({
         success: true,
@@ -243,8 +234,41 @@ exports.listOrders = async (req, res) => {
   }
 };
 
-exports.listAllOrders = async (_req, res) => {
+exports.listAllOrders = async (req, res) => {
   try {
+    const userRole = req.user?.role;
+    const userId = req.user?.id;
+
+    // Jika superadmin, tampilkan semua orders
+    if (userRole === 'superadmin') {
+      const [orders] = await pool.query(
+        `SELECT o.id, o.user_id, o.outlet_id, o.total_pembayaran, o.subtotal, o.tax_amount, o.delivery_fee,
+                o.status, o.payment_status, o.payment_method, o.tanggal,
+                u.nama AS user_nama, a.nama_penerima, a.phone, a.alamat, ot.nama AS outlet_nama
+         FROM orders o
+         LEFT JOIN Users u ON u.id = o.user_id
+         LEFT JOIN addresses a ON a.id = o.address_id
+         LEFT JOIN outlets ot ON ot.id = o.outlet_id
+         ORDER BY o.id DESC`
+      );
+      return res.json({ success: true, orders });
+    }
+
+    // Jika admin biasa, hanya tampilkan orders dari outlet miliknya
+    // Cari outlet_id yang dimiliki admin ini
+    const [outlets] = await pool.query(
+      `SELECT id FROM outlets WHERE owner_id = ?`,
+      [userId]
+    );
+
+    if (outlets.length === 0) {
+      // Admin tidak memiliki outlet manapun
+      return res.json({ success: true, orders: [] });
+    }
+
+    const outletIds = outlets.map(o => o.id);
+    const placeholders = outletIds.map(() => '?').join(',');
+
     const [orders] = await pool.query(
       `SELECT o.id, o.user_id, o.outlet_id, o.total_pembayaran, o.subtotal, o.tax_amount, o.delivery_fee,
               o.status, o.payment_status, o.payment_method, o.tanggal,
@@ -253,8 +277,11 @@ exports.listAllOrders = async (_req, res) => {
        LEFT JOIN Users u ON u.id = o.user_id
        LEFT JOIN addresses a ON a.id = o.address_id
        LEFT JOIN outlets ot ON ot.id = o.outlet_id
-       ORDER BY o.id DESC`
+       WHERE o.outlet_id IN (${placeholders})
+       ORDER BY o.id DESC`,
+      outletIds
     );
+
     return res.json({ success: true, orders });
   } catch (err) {
     console.error("listAllOrders error:", err);

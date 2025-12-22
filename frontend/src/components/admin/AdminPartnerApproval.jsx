@@ -7,9 +7,13 @@ const AdminPartnerApproval = ({ token, userRole }) => {
     const [statusFilter, setStatusFilter] = useState('pending');
     const [processingId, setProcessingId] = useState(null);
 
+    // Confirmation Modal State
+    const [confirmModal, setConfirmModal] = useState({ show: false, action: null, id: null, title: '', message: '' });
+
     // Create Partner Modal State
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
+    const [adminUsers, setAdminUsers] = useState([]);
     const [createForm, setCreateForm] = useState({
         nama: '',
         email: '',
@@ -20,6 +24,7 @@ const AdminPartnerApproval = ({ token, userRole }) => {
         outlet_address: '',
         outlet_phone: '',
         outlet_description: '',
+        owner_id: '',
         bank_name: '',
         bank_account: '',
         bank_holder: ''
@@ -41,6 +46,21 @@ const AdminPartnerApproval = ({ token, userRole }) => {
         fetchPartners();
     }, [token, statusFilter]);
 
+    // Fetch admin users when modal opens
+    useEffect(() => {
+        const fetchAdminUsers = async () => {
+            if (showCreateModal && userRole === 'superadmin') {
+                try {
+                    const res = await adminPartnerApi.listAdmins(token);
+                    setAdminUsers(res.admins || []);
+                } catch (err) {
+                    console.error('Failed to fetch admin users:', err);
+                }
+            }
+        };
+        fetchAdminUsers();
+    }, [showCreateModal, token, userRole]);
+
     const handleApprove = async (id) => {
         setProcessingId(id);
         try {
@@ -54,10 +74,53 @@ const AdminPartnerApproval = ({ token, userRole }) => {
     };
 
     const handleReject = async (id) => {
-        const reason = prompt('Alasan penolakan (opsional):');
+        setConfirmModal({
+            show: true,
+            action: 'reject',
+            id: id,
+            title: 'Tolak Partner',
+            message: 'Yakin ingin menolak partner ini? Tindakan ini tidak dapat dibatalkan.'
+        });
+    };
+
+    const handleSuspend = async (id) => {
+        setConfirmModal({
+            show: true,
+            action: 'suspend',
+            id: id,
+            title: 'Tangguhkan Partner',
+            message: 'Yakin ingin menangguhkan partner ini? Partner tidak akan bisa menerima pesanan baru.'
+        });
+    };
+
+    const executeSuspend = async (id) => {
         setProcessingId(id);
         try {
-            await adminPartnerApi.reject(token, id, reason || '');
+            await adminPartnerApi.suspend(token, id);
+            fetchPartners();
+        } catch (err) {
+            console.error('Suspend error:', err);
+            alert(err.message || 'Gagal menangguhkan partner');
+        } finally {
+            setProcessingId(null);
+        }
+    };
+
+    const handleConfirmAction = async () => {
+        const { action, id } = confirmModal;
+        setConfirmModal({ show: false, action: null, id: null, title: '', message: '' });
+
+        if (action === 'suspend') {
+            await executeSuspend(id);
+        } else if (action === 'reject') {
+            await executeReject(id);
+        }
+    };
+
+    const executeReject = async (id) => {
+        setProcessingId(id);
+        try {
+            await adminPartnerApi.reject(token, id, '');
             fetchPartners();
         } catch (err) {
             alert(err.message || 'Gagal menolak partner');
@@ -66,18 +129,6 @@ const AdminPartnerApproval = ({ token, userRole }) => {
         }
     };
 
-    const handleSuspend = async (id) => {
-        if (!confirm('Yakin ingin menangguhkan partner ini?')) return;
-        setProcessingId(id);
-        try {
-            await adminPartnerApi.suspend(token, id);
-            fetchPartners();
-        } catch (err) {
-            alert(err.message || 'Gagal menangguhkan partner');
-        } finally {
-            setProcessingId(null);
-        }
-    };
 
     const handleReactivate = async (id) => {
         setProcessingId(id);
@@ -114,6 +165,7 @@ const AdminPartnerApproval = ({ token, userRole }) => {
                 outlet_address: '',
                 outlet_phone: '',
                 outlet_description: '',
+                owner_id: '',
                 bank_name: '',
                 bank_account: '',
                 bank_holder: ''
@@ -418,6 +470,26 @@ const AdminPartnerApproval = ({ token, userRole }) => {
                                             placeholder="Deskripsi layanan outlet (opsional)"
                                         />
                                     </div>
+                                    <div className="md:col-span-2">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            <i className="fas fa-user-shield text-indigo-500 mr-1"></i>
+                                            Admin Pemilik Outlet
+                                        </label>
+                                        <select
+                                            name="owner_id"
+                                            value={createForm.owner_id}
+                                            onChange={handleCreateFormChange}
+                                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                        >
+                                            <option value="">-- Pilih Admin (opsional) --</option>
+                                            {adminUsers.map(admin => (
+                                                <option key={admin.id} value={admin.id}>
+                                                    {admin.nama} ({admin.email}) - {admin.role}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <p className="text-xs text-gray-500 mt-1">Admin yang dipilih akan dapat mengelola outlet ini dari panel mereka.</p>
+                                    </div>
                                 </div>
                             </div>
 
@@ -492,6 +564,42 @@ const AdminPartnerApproval = ({ token, userRole }) => {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Confirmation Modal */}
+            {confirmModal.show && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
+                        <div className="p-6">
+                            <div className="flex items-center gap-4 mb-4">
+                                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${confirmModal.action === 'reject' ? 'bg-red-100' : 'bg-yellow-100'
+                                    }`}>
+                                    <i className={`fas ${confirmModal.action === 'reject' ? 'fa-times text-red-500' : 'fa-pause text-yellow-500'
+                                        } text-xl`}></i>
+                                </div>
+                                <h3 className="text-xl font-bold text-gray-900">{confirmModal.title}</h3>
+                            </div>
+                            <p className="text-gray-600 mb-6">{confirmModal.message}</p>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setConfirmModal({ show: false, action: null, id: null, title: '', message: '' })}
+                                    className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50"
+                                >
+                                    Batal
+                                </button>
+                                <button
+                                    onClick={handleConfirmAction}
+                                    className={`flex-1 px-4 py-3 text-white rounded-lg font-medium ${confirmModal.action === 'reject'
+                                            ? 'bg-red-500 hover:bg-red-600'
+                                            : 'bg-yellow-500 hover:bg-yellow-600'
+                                        }`}
+                                >
+                                    Ya, Lanjutkan
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}

@@ -26,13 +26,13 @@ exports.listAdmin = async (_req, res) => {
 
 exports.create = async (req, res) => {
   try {
-    const { nama, alamat, lat, lng, coverage_radius_km, biaya_per_km, min_biaya, jam_operasional, is_active } =
+    const { nama, alamat, lat, lng, coverage_radius_km, biaya_per_km, min_biaya, jam_operasional, is_active, owner_id } =
       req.body;
     if (!nama || !alamat || lat === undefined || lng === undefined) {
       return res.status(400).json({ success: false, message: "Nama, alamat, lat, lng wajib diisi" });
     }
     await pool.query(
-      "INSERT INTO outlets (nama, alamat, lat, lng, coverage_radius_km, biaya_per_km, min_biaya, jam_operasional, is_active, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())",
+      "INSERT INTO outlets (nama, alamat, lat, lng, coverage_radius_km, biaya_per_km, min_biaya, jam_operasional, is_active, owner_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())",
       [
         nama,
         alamat,
@@ -43,6 +43,7 @@ exports.create = async (req, res) => {
         min_biaya || 0,
         jam_operasional || "",
         is_active ? 1 : 0,
+        owner_id || null,
       ]
     );
     return res.status(201).json({ success: true, message: "Outlet berhasil dibuat" });

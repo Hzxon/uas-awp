@@ -18,7 +18,6 @@ const RegisterPage = () => {
       return;
     }
 
-    console.log("Register attempt:", name, email);
     alert('Pendaftaran berhasil! Silakan masuk.');
     navigate('/login');
   };

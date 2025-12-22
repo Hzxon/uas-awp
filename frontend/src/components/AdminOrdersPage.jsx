@@ -16,29 +16,36 @@ const formatTanggal = (value) => {
   });
 };
 
-const statusList = ["Semua", "pending", "proses", "selesai", "cancel", "paid", "failed"];
+const formatTanggalShort = (value) => {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "short",
+  });
+};
 
 const badgeClass = (status) => {
   const s = (status || "").toLowerCase();
-  if (s.includes("paid") || s.includes("lunas") || s.includes("selesai"))
-    return "bg-emerald-50 text-emerald-700 border-emerald-200";
-  if (s.includes("pending") || s.includes("proses"))
-    return "bg-amber-50 text-amber-700 border-amber-200";
+  if (s.includes("paid") || s.includes("lunas") || s.includes("selesai") || s.includes("done"))
+    return "bg-emerald-100 text-emerald-700";
+  if (s.includes("pending") || s.includes("proses") || s.includes("processing"))
+    return "bg-amber-100 text-amber-700";
   if (s.includes("cancel") || s.includes("gagal") || s.includes("failed"))
-    return "bg-red-50 text-red-700 border-red-200";
-  return "bg-slate-50 text-slate-700 border-slate-200";
+    return "bg-red-100 text-red-700";
+  return "bg-slate-100 text-slate-700";
 };
 
-const AdminOrdersPage = ({ authToken, userName }) => {
+const AdminOrdersPage = ({ authToken, userName, userRole }) => {
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("Semua");
-  const [paymentFilter, setPaymentFilter] = useState("Semua");
   const [outletFilter, setOutletFilter] = useState("Semua");
-  const [dateFilter, setDateFilter] = useState("30"); // days window
+  const [dateFilter, setDateFilter] = useState("30");
 
   const fetchOrders = useCallback(async () => {
     try {
@@ -65,14 +72,9 @@ const AdminOrdersPage = ({ authToken, userName }) => {
     return orders.filter((o) => {
       const matchesStatus =
         statusFilter === "Semua" ||
-        (o.status || "").toLowerCase().includes(statusFilter) ||
-        (o.payment_status || "").toLowerCase().includes(statusFilter);
+        (o.status || "").toLowerCase().includes(statusFilter.toLowerCase()) ||
+        (o.payment_status || "").toLowerCase().includes(statusFilter.toLowerCase());
       if (!matchesStatus) return false;
-      const matchesPayment =
-        paymentFilter === "Semua" ||
-        (o.payment_status || "").toLowerCase().includes(paymentFilter.toLowerCase()) ||
-        (o.payment_method || "").toLowerCase().includes(paymentFilter.toLowerCase());
-      if (!matchesPayment) return false;
       const matchesOutlet =
         outletFilter === "Semua" ||
         (o.outlet_nama || "").toLowerCase().includes(outletFilter.toLowerCase());
@@ -82,12 +84,10 @@ const AdminOrdersPage = ({ authToken, userName }) => {
         if (!Number.isNaN(ts) && now - ts > windowMs) return false;
       }
       if (!q) return true;
-      const text = `${o.id} ${o.user_nama || ""} ${o.nama_penerima || ""} ${o.alamat || ""} ${
-        o.payment_status || ""
-      } ${o.status || ""}`.toLowerCase();
+      const text = `${o.id} ${o.user_nama || ""} ${o.outlet_nama || ""} ${o.payment_status || ""} ${o.status || ""}`.toLowerCase();
       return text.includes(q);
     });
-  }, [orders, search, statusFilter, paymentFilter, outletFilter, dateFilter]);
+  }, [orders, search, statusFilter, outletFilter, dateFilter]);
 
   const outletOptions = useMemo(() => {
     const set = new Set();
@@ -97,264 +97,244 @@ const AdminOrdersPage = ({ authToken, userName }) => {
     return Array.from(set);
   }, [orders]);
 
-  const chartData = useMemo(() => {
-    const buckets = {};
-    filteredOrders.forEach((o) => {
-      const d = o.tanggal ? new Date(o.tanggal) : null;
-      if (!d || Number.isNaN(d.getTime())) return;
-      const key = d.toISOString().slice(0, 10);
-      if (!buckets[key]) buckets[key] = { total: 0, count: 0, paid: 0, failed: 0 };
-      const totalPembayaran = Number(o.total_pembayaran || o.totalPembayaran || 0);
-      buckets[key].total += totalPembayaran;
-      buckets[key].count += 1;
-      const pay = (o.payment_status || "").toLowerCase();
-      if (pay.includes("paid") || pay.includes("settled") || pay.includes("lunas")) buckets[key].paid += 1;
-      if (pay.includes("fail") || pay.includes("cancel")) buckets[key].failed += 1;
-    });
-    return Object.entries(buckets)
-      .sort(([a], [b]) => (a > b ? 1 : -1))
-      .map(([date, val]) => ({
-        date,
-        total: val.total,
-        count: val.count,
-        paid: val.paid,
-        failed: val.failed,
-      }));
+  // Summary stats
+  const stats = useMemo(() => {
+    const totalOrders = filteredOrders.length;
+    const totalRevenue = filteredOrders.reduce((sum, o) => sum + Number(o.total_pembayaran || 0), 0);
+    const paidOrders = filteredOrders.filter(o =>
+      (o.payment_status || "").toLowerCase().includes("paid")
+    ).length;
+    return { totalOrders, totalRevenue, paidOrders };
   }, [filteredOrders]);
 
-  const maxTotal = useMemo(
-    () => (chartData.length ? Math.max(...chartData.map((d) => d.total || 0)) : 0),
-    [chartData]
-  );
+  // Download CSV function
+  const downloadCSV = () => {
+    const headers = ["ID", "Tanggal", "Customer", "Outlet", "Total", "Status Pembayaran"];
+    const rows = filteredOrders.map(o => [
+      o.id,
+      formatTanggal(o.tanggal),
+      o.user_nama || "-",
+      o.outlet_nama || "-",
+      o.total_pembayaran || 0,
+      o.payment_status || "-"
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `rekap-transaksi-${new Date().toISOString().slice(0, 10)}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 text-slate-900">
-      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/80 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 via-sky-500 to-emerald-400 text-sm font-semibold text-white shadow-md shadow-blue-500/20">
-              WF
+    <div className="min-h-screen" style={{ background: 'linear-gradient(to bottom, #e0f7fa 0%, #fffde7 50%, #ffecb3 100%)' }}>
+      {/* Hero Banner with Stats */}
+      <div className="bg-gradient-to-r from-teal-500 via-cyan-500 to-teal-400 pt-5 pb-6">
+        <div className="mx-auto max-w-6xl px-4">
+          {/* Header Row */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => navigate("/admin")}
+                className="h-10 w-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center text-white hover:bg-white/30 transition"
+              >
+                <i className="fas fa-arrow-left"></i>
+              </button>
+              <div>
+                <h1 className="text-2xl font-bold text-white">Rekap Transaksi</h1>
+                <p className="text-white/80 text-sm">
+                  {userRole === "superadmin" ? "Semua Outlet" : `Login: ${userName}`}
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">Admin panel</p>
-              <h1 className="text-lg font-bold text-slate-900">History transaksi</h1>
-              <p className="text-xs text-slate-600">Login sebagai {userName || "Admin"}</p>
-            </div>
+            <button
+              onClick={downloadCSV}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-teal-600 font-semibold text-sm shadow-lg hover:shadow-xl transition-all"
+            >
+              <i className="fas fa-download"></i>
+              Download Rekap
+            </button>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              onClick={() => navigate("/admin")}
-              className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
-            >
-              <span className="h-2 w-2 rounded-full bg-slate-500" />
-              Kembali ke panel
-            </button>
-            <button
-              onClick={fetchOrders}
-              className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
-            >
-              <span className="h-2 w-2 rounded-full bg-blue-500" />
-              Refresh data
-            </button>
+
+          {/* Stats Cards - inside banner */}
+          <div className="grid grid-cols-3 gap-4">
+            <div className="rounded-2xl bg-white/95 backdrop-blur p-5 shadow-lg">
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-cyan-400 to-teal-500 flex items-center justify-center text-white shadow-lg shadow-cyan-500/30">
+                  <i className="fas fa-receipt text-lg"></i>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-slate-900">{stats.totalOrders}</p>
+                  <p className="text-sm text-slate-500">Total Order</p>
+                </div>
+              </div>
+            </div>
+            <div className="rounded-2xl bg-white/95 backdrop-blur p-5 shadow-lg">
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center text-white shadow-lg shadow-emerald-500/30">
+                  <i className="fas fa-check-circle text-lg"></i>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-slate-900">{stats.paidOrders}</p>
+                  <p className="text-sm text-slate-500">Lunas</p>
+                </div>
+              </div>
+            </div>
+            <div className="rounded-2xl bg-white/95 backdrop-blur p-5 shadow-lg">
+              <div className="flex items-center gap-3">
+                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center text-white shadow-lg shadow-orange-500/30">
+                  <i className="fas fa-money-bill-wave text-lg"></i>
+                </div>
+                <div>
+                  <p className="text-xl font-bold text-slate-900">{formatRupiah(stats.totalRevenue)}</p>
+                  <p className="text-sm text-slate-500">Total Revenue</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </header>
+      </div>
 
-      <main className="mx-auto max-w-6xl px-4 py-6 space-y-6">
-        <section className="rounded-3xl border border-slate-200 bg-white/80 p-6 shadow-xl backdrop-blur">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500">Filter & pencarian</p>
-              <h2 className="text-xl font-bold text-slate-900">Cari transaksi</h2>
-            </div>
-            <div className="flex flex-wrap items-center gap-3">
+      {/* Main Content */}
+      <main className="mx-auto max-w-6xl px-4 py-6 space-y-5">
+
+        {/* Filters */}
+        <div className="rounded-2xl bg-white/80 backdrop-blur border border-slate-200/50 p-4 shadow-lg">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative flex-1 min-w-[200px]">
+              <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Cari ID, nama user, penerima, alamat, status..."
-                className="w-64 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-slate-400 focus:bg-white focus:ring focus:ring-blue-200"
+                placeholder="Cari order ID, customer, outlet..."
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-800 outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100 transition"
               />
-              <select
-                value={dateFilter}
-                onChange={(e) => setDateFilter(e.target.value)}
-                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-slate-400 focus:bg-white focus:ring focus:ring-blue-200"
-              >
-                <option value="7">7 hari</option>
-                <option value="30">30 hari</option>
-                <option value="90">90 hari</option>
-                <option value="0">Semua waktu</option>
-              </select>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-slate-400 focus:bg-white focus:ring focus:ring-blue-200"
-              >
-                {statusList.map((item) => (
-                  <option key={item} value={item}>
-                    {item === "Semua" ? "Semua status" : item}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={paymentFilter}
-                onChange={(e) => setPaymentFilter(e.target.value)}
-                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-slate-400 focus:bg-white focus:ring focus:ring-blue-200"
-              >
-                <option value="Semua">Semua pembayaran</option>
-                <option value="paid">Paid</option>
-                <option value="pending">Pending</option>
-                <option value="fail">Failed</option>
-                <option value="cod">COD</option>
-                <option value="transfer">Transfer</option>
-              </select>
+            </div>
+            <select
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className="px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100 transition"
+            >
+              <option value="7">7 Hari Terakhir</option>
+              <option value="30">30 Hari Terakhir</option>
+              <option value="90">90 Hari Terakhir</option>
+              <option value="0">Semua Waktu</option>
+            </select>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100 transition"
+            >
+              <option value="Semua">Semua Status</option>
+              <option value="paid">Lunas</option>
+              <option value="pending">Pending</option>
+              <option value="failed">Gagal</option>
+            </select>
+            {outletOptions.length > 1 && (
               <select
                 value={outletFilter}
                 onChange={(e) => setOutletFilter(e.target.value)}
-                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-slate-400 focus:bg-white focus:ring focus:ring-blue-200"
+                className="px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm text-slate-700 outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100 transition"
               >
-                <option value="Semua">Semua outlet</option>
+                <option value="Semua">Semua Outlet</option>
                 {outletOptions.map((name) => (
-                  <option key={name} value={name}>
-                    {name}
-                  </option>
+                  <option key={name} value={name}>{name}</option>
                 ))}
               </select>
-            </div>
-          </div>
-        </section>
-
-        <section className="rounded-3xl border border-slate-200 bg-white/80 p-6 shadow-xl backdrop-blur">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500">Grafik</p>
-              <h2 className="text-xl font-bold text-slate-900">Tren transaksi</h2>
-              <p className="text-sm text-slate-600">Jumlah order & total pembayaran per hari.</p>
-            </div>
-          </div>
-          <div className="mt-4 space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-md">
-            {chartData.length === 0 ? (
-              <div className="text-center text-sm text-slate-500 py-6">Tidak ada data dalam rentang ini.</div>
-            ) : (
-              <div className="space-y-3">
-                {chartData.map((row) => (
-                  <div key={row.date} className="space-y-1">
-                    <div className="flex items-center justify-between text-xs text-slate-600">
-                      <span className="font-semibold text-slate-800">{row.date}</span>
-                      <span>{formatRupiah(row.total)}</span>
-                    </div>
-                    <div className="h-3 w-full rounded-full bg-slate-100 overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-blue-500 to-emerald-400"
-                        style={{ width: maxTotal ? `${Math.max(4, (row.total / maxTotal) * 100)}%` : "4%" }}
-                      />
-                    </div>
-                    <div className="flex items-center gap-2 text-[11px] text-slate-600">
-                      <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">Order {row.count}</span>
-                      <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Paid {row.paid}</span>
-                      <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-700">Failed {row.failed}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
             )}
           </div>
-        </section>
+        </div>
 
-        <section className="rounded-3xl border border-slate-200 bg-white/80 p-6 shadow-xl backdrop-blur">
+        {/* Orders Table */}
+        <div className="rounded-2xl bg-white/80 backdrop-blur border border-slate-200/50 shadow-lg overflow-hidden">
           {errorMsg && (
-            <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <div className="px-4 py-3 bg-red-50 border-b border-red-100 text-sm text-red-700">
+              <i className="fas fa-exclamation-circle mr-2"></i>
               {errorMsg}
             </div>
           )}
 
-          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-md">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-slate-900">
-                <thead className="sticky top-0 z-10 bg-slate-100 text-left">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-slate-50/80 border-b border-slate-200">
+                  <th className="text-left px-5 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Order</th>
+                  <th className="text-left px-5 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Customer</th>
+                  <th className="text-left px-5 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Outlet</th>
+                  <th className="text-right px-5 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Total</th>
+                  <th className="text-center px-5 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                  <th className="text-right px-5 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Tanggal</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {isLoading ? (
+                  Array.from({ length: 5 }).map((_, idx) => (
+                    <tr key={idx}>
+                      <td className="px-5 py-4"><div className="h-5 w-16 animate-pulse rounded bg-slate-200" /></td>
+                      <td className="px-5 py-4"><div className="h-5 w-24 animate-pulse rounded bg-slate-200" /></td>
+                      <td className="px-5 py-4"><div className="h-5 w-20 animate-pulse rounded bg-slate-200" /></td>
+                      <td className="px-5 py-4"><div className="h-5 w-20 animate-pulse rounded bg-slate-200 ml-auto" /></td>
+                      <td className="px-5 py-4"><div className="h-6 w-16 animate-pulse rounded-full bg-slate-200 mx-auto" /></td>
+                      <td className="px-5 py-4"><div className="h-5 w-16 animate-pulse rounded bg-slate-200 ml-auto" /></td>
+                    </tr>
+                  ))
+                ) : filteredOrders.length === 0 ? (
                   <tr>
-                    <th className="px-4 py-3 font-semibold">Order</th>
-                    <th className="px-4 py-3 font-semibold">User</th>
-                    <th className="px-4 py-3 font-semibold">Pembayaran</th>
-                    <th className="px-4 py-3 font-semibold">Status</th>
-                    <th className="px-4 py-3 font-semibold">Tanggal</th>
+                    <td colSpan={6} className="px-5 py-12 text-center">
+                      <div className="flex flex-col items-center gap-2">
+                        <i className="fas fa-inbox text-4xl text-slate-300"></i>
+                        <p className="text-slate-500">Tidak ada transaksi ditemukan</p>
+                      </div>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {isLoading
-                    ? Array.from({ length: 5 }).map((_, idx) => (
-                        <tr key={idx} className="border-t border-slate-200">
-                          <td className="px-4 py-3">
-                            <div className="h-4 w-20 animate-pulse rounded bg-slate-200" />
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="h-4 w-32 animate-pulse rounded bg-slate-200" />
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="h-4 w-24 animate-pulse rounded bg-slate-200" />
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="h-6 w-24 animate-pulse rounded bg-slate-200" />
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="h-4 w-28 animate-pulse rounded bg-slate-200" />
-                          </td>
-                        </tr>
-                      ))
-                    : filteredOrders.map((order) => (
-                        <tr key={order.id} className="border-t border-slate-200 hover:bg-slate-50">
-                          <td className="px-4 py-3">
-                            <div className="font-semibold text-slate-900">#{order.id}</div>
-                            <div className="text-xs text-slate-500">
-                              Total {formatRupiah(order.total_pembayaran || order.totalPembayaran)}
-                            </div>
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="font-semibold text-slate-800">{order.user_nama || "User"}</div>
-                            <div className="text-xs text-slate-500">
-                              {order.nama_penerima || order.alamat ? `${order.nama_penerima || "-"} - ${order.alamat || "-"}` : "Alamat tidak tersedia"}
-                            </div>
-                            {order.outlet_nama && (
-                              <div className="text-[11px] text-slate-500">Outlet: {order.outlet_nama}</div>
-                            )}
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="text-sm font-semibold text-slate-900">
-                              {formatRupiah(order.total_pembayaran || order.totalPembayaran)}
-                            </div>
-                            <div className="text-xs text-slate-500">
-                              Fee {formatRupiah(order.delivery_fee || 0)} - Pajak {formatRupiah(order.tax_amount || 0)}
-                            </div>
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="inline-flex items-center gap-2">
-                              <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${badgeClass(order.status)}`}>
-                                {order.status || "Status?"}
-                              </span>
-                              <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${badgeClass(order.payment_status)}`}>
-                                {order.payment_status || "Pembayaran?"}
-                              </span>
-                              {order.payment_method && (
-                                <span className="rounded-full border px-2.5 py-1 text-xs font-semibold bg-slate-50 text-slate-700 border-slate-200">
-                                  {order.payment_method}
-                                </span>
-                              )}
-                            </div>
-                          </td>
-                          <td className="px-4 py-3 text-slate-700">{formatTanggal(order.tanggal || order.createdAt)}</td>
-                        </tr>
-                      ))}
-                  {!isLoading && filteredOrders.length === 0 && (
-                    <tr>
-                      <td colSpan={5} className="px-4 py-6 text-center text-slate-500">
-                        Tidak ada transaksi yang cocok dengan filter.
+                ) : (
+                  filteredOrders.map((order) => (
+                    <tr key={order.id} className="hover:bg-slate-50/50 transition">
+                      <td className="px-5 py-4">
+                        <span className="font-semibold text-slate-900">#{order.id}</span>
+                      </td>
+                      <td className="px-5 py-4">
+                        <span className="text-slate-700">{order.user_nama || "-"}</span>
+                      </td>
+                      <td className="px-5 py-4">
+                        <span className="text-slate-600 text-sm">{order.outlet_nama || "-"}</span>
+                      </td>
+                      <td className="px-5 py-4 text-right">
+                        <span className="font-semibold text-slate-900">
+                          {formatRupiah(order.total_pembayaran)}
+                        </span>
+                      </td>
+                      <td className="px-5 py-4 text-center">
+                        <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${badgeClass(order.payment_status)}`}>
+                          {order.payment_status || "-"}
+                        </span>
+                      </td>
+                      <td className="px-5 py-4 text-right">
+                        <span className="text-sm text-slate-600">{formatTanggalShort(order.tanggal)}</span>
                       </td>
                     </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
-        </section>
+
+          {/* Footer with count */}
+          {!isLoading && filteredOrders.length > 0 && (
+            <div className="px-5 py-3 bg-slate-50/50 border-t border-slate-100 text-sm text-slate-500">
+              Menampilkan {filteredOrders.length} transaksi
+            </div>
+          )}
+        </div>
       </main>
     </div>
   );

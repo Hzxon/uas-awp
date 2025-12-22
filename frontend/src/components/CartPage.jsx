@@ -41,6 +41,8 @@ const CartPage = ({
   const [targetSection, setTargetSection] = useState(null);
   const [addresses, setAddresses] = useState([]);
   const [isAddingAddress, setIsAddingAddress] = useState(false);
+  const [isEditingAddress, setIsEditingAddress] = useState(false);
+  const [editingAddressId, setEditingAddressId] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState("virtual-account");
   const [isAddrLoading, setIsAddrLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState("");
@@ -174,7 +176,16 @@ const CartPage = ({
   const handleAddAddress = async (e) => {
     e.preventDefault();
     try {
-      const res = await addressApi.create(authToken, addressForm);
+      if (isEditingAddress && editingAddressId) {
+        // Update existing address
+        await addressApi.update(authToken, editingAddressId, addressForm);
+        setIsEditingAddress(false);
+        setEditingAddressId(null);
+      } else {
+        // Create new address
+        const res = await addressApi.create(authToken, addressForm);
+        if (res.address?.id) setSelectedAddressId(res.address.id);
+      }
       setCheckoutError("");
       setIsAddingAddress(false);
       setAddressForm({
@@ -184,12 +195,57 @@ const CartPage = ({
         alamat: "",
         catatan: "",
         is_default: true,
+        lat: "",
+        lng: "",
       });
       await refreshAddresses();
-      if (res.address?.id) setSelectedAddressId(res.address.id);
     } catch (err) {
       alert(err.message || "Gagal menyimpan alamat");
     }
+  };
+
+  const handleEditAddress = (addr) => {
+    setAddressForm({
+      label: addr.label || "Rumah",
+      nama_penerima: addr.nama_penerima || "",
+      phone: addr.phone || "",
+      alamat: addr.alamat || "",
+      catatan: addr.catatan || "",
+      is_default: addr.is_default || false,
+      lat: addr.lat || "",
+      lng: addr.lng || "",
+    });
+    setEditingAddressId(addr.id);
+    setIsEditingAddress(true);
+    setIsAddingAddress(false);
+  };
+
+  const handleDeleteAddress = async (id) => {
+    try {
+      await addressApi.remove(authToken, id);
+      await refreshAddresses();
+      if (selectedAddressId === id) {
+        setSelectedAddressId(null);
+      }
+    } catch (err) {
+      alert(err.message || "Gagal menghapus alamat");
+    }
+  };
+
+  const handleCancelAddressForm = () => {
+    setIsAddingAddress(false);
+    setIsEditingAddress(false);
+    setEditingAddressId(null);
+    setAddressForm({
+      label: "Rumah",
+      nama_penerima: userName || "",
+      phone: "",
+      alamat: "",
+      catatan: "",
+      is_default: true,
+      lat: "",
+      lng: "",
+    });
   };
 
   // --- BAGIAN UTAMA YANG DIPERBAIKI ---
@@ -355,9 +411,12 @@ const CartPage = ({
                   addressForm={addressForm}
                   setAddressForm={setAddressForm}
                   onSubmit={handleAddAddress}
-                  onCancel={() => setIsAddingAddress((p) => !p)}
+                  onCancel={handleCancelAddressForm}
                   isAdding={isAddingAddress}
+                  isEditing={isEditingAddress}
                   isLoading={isAddrLoading}
+                  onEdit={handleEditAddress}
+                  onDelete={handleDeleteAddress}
                 />
               </div>
 
@@ -501,9 +560,12 @@ const CartPage = ({
                   addressForm={addressForm}
                   setAddressForm={setAddressForm}
                   onSubmit={handleAddAddress}
-                  onCancel={() => setIsAddingAddress((p) => !p)}
+                  onCancel={handleCancelAddressForm}
                   isAdding={isAddingAddress}
+                  isEditing={isEditingAddress}
                   isLoading={isAddrLoading}
+                  onEdit={handleEditAddress}
+                  onDelete={handleDeleteAddress}
                 />
               )}
 

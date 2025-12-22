@@ -102,7 +102,7 @@ const CheckoutPaymentPage = ({
   };
 
   return (
-    <div className="checkout-address-page">
+    <div className="checkout-address-page flex flex-col min-h-screen">
       <Navbar
         cartCount={cartCount}
         cartItems={cartItems}
@@ -111,7 +111,7 @@ const CheckoutPaymentPage = ({
         onLogout={onLogout}
       />
 
-      <div className="checkout-address-container">
+      <div className="checkout-address-container flex-1">
         {/* Breadcrumb */}
         <div className="checkout-breadcrumb">
           <span className="step-badge">Step 3</span>
