@@ -84,9 +84,10 @@ app.use((err, req, res, next) => {
 });
 
 const startServer = async () => {
-  // 1. Nyalakan server dulu
-  app.listen(PORT, () => {
-    console.log(`Server REAL running on http://localhost:${PORT}`);
+  // 1. Nyalakan server - bind ke 0.0.0.0 untuk cloud deployment
+  const HOST = process.env.HOST || '0.0.0.0';
+  app.listen(PORT, HOST, () => {
+    console.log(`Server running on ${HOST}:${PORT}`);
   });
 
   // 2. Baru coba konek DB (hanya untuk info)
