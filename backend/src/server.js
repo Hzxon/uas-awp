@@ -24,19 +24,40 @@ const PORT = process.env.PORT || 5001;
 const app = express();
 
 // --- CONFIG CORS (Dev + Production) ---
-const allowedOrigins = [
+// Normalize and allow specific origins + *.vercel.app previews
+const staticOrigins = [
   "http://localhost:5173",
   "http://127.0.0.1:5173",
   "http://localhost:4173",
   process.env.FRONTEND_ORIGIN, // Production frontend URL
-].filter(Boolean); // Remove undefined values
+].filter(Boolean).map((o) => o.replace(/\/$/, ""));
 
-app.use(cors({
-  origin: allowedOrigins,
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true); // mobile apps / curl
+
+    try {
+      const normalized = origin.replace(/\/$/, "");
+      const hostname = new URL(normalized).hostname;
+
+      const isStaticAllowed = staticOrigins.includes(normalized);
+      const isVercelPreview = /\.vercel\.app$/i.test(hostname);
+
+      if (isStaticAllowed || isVercelPreview) {
+        return callback(null, true);
+      }
+    } catch (e) {
+      // fall through to rejection below
+    }
+
+    return callback(new Error("Not allowed by CORS"));
+  },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
-}));
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+
+app.use(cors(corsOptions));
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" },
 }));

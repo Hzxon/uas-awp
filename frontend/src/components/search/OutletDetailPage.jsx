@@ -29,8 +29,7 @@ const OutletDetailPage = ({ isLoggedIn, onLogout, onAddToCart, cartCount, cartIt
     useEffect(() => {
         const fetchOutletDetail = async () => {
             try {
-                const res = await fetch(`http://localhost:5001/api/outlets/${id}`);
-                const data = await res.json();
+                const data = await outletApi.getById(id);
 
                 if (data.success) {
                     setOutlet(data.outlet);

@@ -1,5 +1,4 @@
-const DEFAULT_API_BASE_URL = "http://localhost:5001/api";
-const API_BASE_URL = (import.meta.env.VITE_API_URL || DEFAULT_API_BASE_URL).replace(/\/$/, "");
+const API_BASE_URL = (import.meta.env.VITE_API_URL || "http://localhost:5001/api").replace(/\/$/, "");
 
 const request = async (path, { method = "GET", token, body } = {}) => {
   const headers = { "Content-Type": "application/json" };
@@ -10,39 +9,18 @@ const request = async (path, { method = "GET", token, body } = {}) => {
   const options = {
     method,
     headers,
-    credentials: "include", // ⬅️ TAMBAHKAN INI (agar match dengan backend cors)
+    credentials: "include",
     body: body ? JSON.stringify(body) : undefined,
   };
 
-  const bases = [API_BASE_URL, DEFAULT_API_BASE_URL].filter(
-    (base, idx, arr) => base && arr.indexOf(base) === idx
-  );
+  const response = await fetch(`${API_BASE_URL}${path}`, options);
+  const data = await response.json().catch(() => ({}));
 
-  let lastErr;
-  for (const base of bases) {
-    try {
-      const response = await fetch(`${base}${path}`, options);
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        throw new Error(data?.message || "Permintaan gagal diproses");
-      }
-
-      // If the first base URL is down (e.g., wrong port), fall back to the default one.
-      if (base !== API_BASE_URL) {
-        console.warn(`Primary API ${API_BASE_URL} unreachable, fallback to ${base}`);
-      }
-      return data;
-    } catch (err) {
-      const isNetworkError = err instanceof TypeError || err?.message?.includes("Failed to fetch");
-      if (!isNetworkError || base === DEFAULT_API_BASE_URL) {
-        throw err;
-      }
-      lastErr = err;
-    }
+  if (!response.ok) {
+    throw new Error(data?.message || "Permintaan gagal diproses");
   }
 
-  throw lastErr || new Error("Tidak dapat terhubung ke server API");
+  return data;
 };
 
 export const authApi = {
