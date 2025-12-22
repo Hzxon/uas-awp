@@ -1,0 +1,37 @@
+# dependencies
+**/node_modules
+**/.pnpm-store
+**/.yarn
+**/.cache
+
+# build outputs
+**/dist
+**/build
+**/.next
+**/.turbo
+**/.vite
+
+# logs
+**/*.log
+
+# local env / secrets
+**/.env
+**/.env.*
+
+# git
+.git
+.gitignore
+
+# OS / editor
+**/.DS_Store
+**/.idea
+**/.vscode
+
+# python venvs (kalau ada)
+**/.venv
+**/venv
+
+# misc large files
+**/*.zip
+**/*.tar
+**/*.tar.gz
