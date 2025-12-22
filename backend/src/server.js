@@ -61,6 +61,11 @@ app.use("/api/outlet-items", outletItemRoutes);
 const adminAnalyticsRoutes = require("./routes/adminAnalyticsRoutes");
 app.use("/api/admin/analytics", adminAnalyticsRoutes);
 
+// Root Route
+app.get("/", (req, res) => {
+  res.json({ ok: true, message: "Backend is running" });
+});
+
 // Health Check
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", port: PORT });
